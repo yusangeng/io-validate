@@ -49,6 +49,7 @@
 	var shouldThrow = __webpack_require__(50);
 
 	check.setCheckFailureCallback(function (e) {
+		//console.log(e.stack);
 		console.log(e.message);
 	});
 

@@ -3,6 +3,7 @@ var expect = require('chai').expect;
 var shouldThrow = require('./shouldThrow');
 
 check.setCheckFailureCallback(function (e) {
+	//console.log(e.stack);
 	console.log(e.message);
 });
 

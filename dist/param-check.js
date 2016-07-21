@@ -124,7 +124,7 @@
 		checkFailureCallback = cb;
 	}
 
-	var rexpPosition = /[^/\\:*?"<>|]+:\d+:\d+\)?$/;
+	var rexpPosition = /[^/\\:*?"<>|]+:\d+(?:\:\d+)?\)?$/;
 	var pauseCallback = false;
 
 	var isExternalSourceFile = function (line) {
