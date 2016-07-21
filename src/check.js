@@ -56,10 +56,12 @@ function throwError(err) {
 			var line = lines[i];
 			if (isExternalSourceFile(line)) {
 				var pos = rexpPosition.exec(line);
-				
-				pos = ' position: ' + pos[0] + '.';
-				err.message = err.message + pos;
-				break;
+
+				if (pos) {
+					pos = ' position: ' + pos[0] + '.';
+					err.message = err.message + pos;
+					break;
+				}
 			}
 		}
 	}
@@ -128,10 +130,29 @@ Checker.prototype._makeMessage = function (entry, args) {
 		reason = 'has NO length';
 	} else if (entry == 'and') {
 		// args[0] 是执行失败的检查序号,args[1] 是具体原因
+		var no = args[0];
+		var detail = args[1] || 'unknown';
+
+		if (detail.isPolicy) {
+			detail = detail.path();
+		}
+
 		reason = 'FAILED when executing check[' +
-			args[0] + '] of an "AND" check, detail: {' + (args[1] || 'unknown') + '}';
+			no + '] of an "AND" check, detail: {' + detail + '}';
 	} else if (entry == 'or') {
-		reason = 'FAILED when executing an "OR" check, detail: {' + args.join('}{') + '}';
+		var mapArgs = [];
+		
+		for (var i = 0; i < args.length; ++i) {
+			var detail = args[i] || 'unknown';
+
+			if (detail.isPolicy) {
+				detail = detail.path();
+			}
+			
+			mapArgs.push(detail);
+		}
+		
+		reason = 'FAILED when executing an "OR" check, detail: {' + mapArgs.join('}{') + '}';
 	} else {
 		reason = 'for unknown reason';
 	}

@@ -23,9 +23,10 @@ module.exports = makePolicy;
  * @return 生成的 policy 实例
  */
 function makePolicy(proto, chainingProps, chainingMethods) {
-	function Policy(fn, prev) {
+	function Policy(fn, prev, name) {
 		this.fn_ = fn;
 		this.prev_ = prev;
+		this.name_ = name;
 		this._initCustomProps(chainingProps);
 	}
 
@@ -42,7 +43,7 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 					return function () {
 						return new Policy(function (that) {
 							return that[prop];
-						}, self);
+						}, self, prop);
 					}
 				})(propName);
 
@@ -67,6 +68,16 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 		return that;
 	};
 	
+	Policy.prototype.path = function () {
+		var prev = this.prev_;
+		var name = this.name_;
+		var ret = prev ? prev.path() : '';
+		
+		ret += '.' + this.name_;
+		
+		return ret;
+	};
+	
 	for (var key in proto) {
 		if (!proto.hasOwnProperty(key) || !isFunction(proto[key])) {
 			continue;
@@ -82,11 +93,11 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 				var args = Array.prototype.slice.call(arguments, 0);
 
 				return new Policy(function (that) {
-					return proto[fnName].apply(that, args);
-				}, self);
+					return that[fnName].apply(that, args);
+				}, self, fnName);
 			}
 		})(key);
 	}
 	
-	return new Policy();
+	return new Policy(null, null, 'policy');
 }

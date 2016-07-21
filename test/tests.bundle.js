@@ -632,6 +632,86 @@
 		});
 	});
 
+	describe('policy.not', function () {
+		var testFn = function (a) {
+			check(a, 'a').and(check.policy.is('number'), check.policy.gt(1).not.gt(3), function (obj) {
+				return obj % 2;
+			});
+		};
+		
+		it('good param', function () {
+			testFn(2.5);
+			testFn(3);
+		});
+		
+		it('bad param', function () {
+			shouldThrow(function () {
+				testFn();
+			});
+			
+			shouldThrow(function () {
+				testFn(2);
+			});
+
+			shouldThrow(function () {
+				testFn(4);
+			});
+
+			shouldThrow(function () {
+				testFn("");
+			});
+		});
+	});
+
+	describe('not.or', function () {
+		var testFn = function (a) {
+			check(a, 'a').not.or(check.policy.is('string'), check.policy.is('number').not.lt(1).not.gt(3), function (obj) {
+				return obj % 2;
+			});
+		};
+		
+		it('good param', function () {
+			testFn();
+			testFn(0);
+			testFn(4);
+		});
+		
+		it('bad param', function () {
+			shouldThrow(function () {
+				testFn("");
+			});
+			
+			shouldThrow(function () {
+				testFn(2);
+			});
+			
+			shouldThrow(function () {
+				testFn(9);
+			});
+		});
+	});
+
+
+	describe('not.and', function () {
+		var testFn = function (a) {
+			check(a, 'a').not.and(check.policy.is('number').not.lt(1).not.gt(3), function (obj) {
+				return obj % 2 === 0;
+			});
+		};
+		
+		it('good param', function () {
+			testFn();
+			testFn(0);
+			testFn(4);
+			testFn("");
+		});
+		
+		it('bad param', function () {
+			shouldThrow(function () {
+				testFn(2);
+			});
+		});
+	});
 
 /***/ },
 /* 1 */,

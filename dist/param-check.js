@@ -147,10 +147,12 @@
 				var line = lines[i];
 				if (isExternalSourceFile(line)) {
 					var pos = rexpPosition.exec(line);
-					
-					pos = ' position: ' + pos[0] + '.';
-					err.message = err.message + pos;
-					break;
+
+					if (pos) {
+						pos = ' position: ' + pos[0] + '.';
+						err.message = err.message + pos;
+						break;
+					}
 				}
 			}
 		}
@@ -219,10 +221,29 @@
 			reason = 'has NO length';
 		} else if (entry == 'and') {
 			// args[0] 是执行失败的检查序号,args[1] 是具体原因
+			var no = args[0];
+			var detail = args[1] || 'unknown';
+
+			if (detail.isPolicy) {
+				detail = detail.path();
+			}
+
 			reason = 'FAILED when executing check[' +
-				args[0] + '] of an "AND" check, detail: {' + (args[1] || 'unknown') + '}';
+				no + '] of an "AND" check, detail: {' + detail + '}';
 		} else if (entry == 'or') {
-			reason = 'FAILED when executing an "OR" check, detail: {' + args.join('}{') + '}';
+			var mapArgs = [];
+			
+			for (var i = 0; i < args.length; ++i) {
+				var detail = args[i] || 'unknown';
+
+				if (detail.isPolicy) {
+					detail = detail.path();
+				}
+				
+				mapArgs.push(detail);
+			}
+			
+			reason = 'FAILED when executing an "OR" check, detail: {' + mapArgs.join('}{') + '}';
 		} else {
 			reason = 'for unknown reason';
 		}
@@ -830,9 +851,10 @@
 	 * @return 生成的 policy 实例
 	 */
 	function makePolicy(proto, chainingProps, chainingMethods) {
-		function Policy(fn, prev) {
+		function Policy(fn, prev, name) {
 			this.fn_ = fn;
 			this.prev_ = prev;
+			this.name_ = name;
 			this._initCustomProps(chainingProps);
 		}
 
@@ -849,7 +871,7 @@
 						return function () {
 							return new Policy(function (that) {
 								return that[prop];
-							}, self);
+							}, self, prop);
 						}
 					})(propName);
 
@@ -874,6 +896,16 @@
 			return that;
 		};
 		
+		Policy.prototype.path = function () {
+			var prev = this.prev_;
+			var name = this.name_;
+			var ret = prev ? prev.path() : '';
+			
+			ret += '.' + this.name_;
+			
+			return ret;
+		};
+		
 		for (var key in proto) {
 			if (!proto.hasOwnProperty(key) || !isFunction(proto[key])) {
 				continue;
@@ -889,13 +921,13 @@
 					var args = Array.prototype.slice.call(arguments, 0);
 
 					return new Policy(function (that) {
-						return proto[fnName].apply(that, args);
-					}, self);
+						return that[fnName].apply(that, args);
+					}, self, fnName);
 				}
 			})(key);
 		}
 		
-		return new Policy();
+		return new Policy(null, null, 'policy');
 	}
 
 /***/ },
