@@ -1,27 +1,108 @@
 # param-check
-A js library for checking parameters and any object.
+A js library for checking parameters.
+
+## install
+
+```
+npm install param-check
+```
 
 ## Using
 
-### Global
+### Loading
 
 ```
 <html>
+<body>
 <script src="param-check.js"></script>
 <script>
 	var foobar = 2;
+	
+	// check is the global variable exposed by param-check.js
 	check(foobar).gt(1).lt(3);
 </script>
+</body>
 </html>
 ```
 
 ### CommonJS
 
 ```
-var check = require('./param-check');
+var check = require('param-check');
 
 var foobar = 2;
 check(foobar).gt(1).lt(3);
+```
+
+## Example
+
+```javascript
+
+check.setCheckFailureCallback(function (err) {
+	console.log(err.message);
+	
+	ignore = false;
+	
+	// if return false, err would be throw
+	return ignore;
+});
+
+var theSome = {};
+
+function foobar(a) {
+
+	// a should be a string or number
+	check(a, 'a').is('string', 'number');
+
+	// a should be > 1, and < 3
+	check(a, 'a').gt(1).lt(3);
+
+	// a should be >= 1, and <= 3
+	check(a, 'a').not.lt(1).not.gt(3);
+
+	// a should be in range [0,1) or (1,2]
+	check(a, 'a').within('[0,1)', '(1,2]');
+
+	// a should match regexp /\w\d+/
+	check(a, 'a').match(/\w\d+/);
+
+	// a should be the same object to theSome;
+	check(a, 'a').same(theSome);
+	
+	// a should be deep-equal to theSome;
+	check(a, 'a').eq(theSome);
+	
+	// a should have a property named 'count'
+	check(a, 'a').has('count');
+
+	// a should have a property named 'count', and a['count']
+	// should be > 1, and < 3
+	check(a, 'a').has('count').gt(1).lt(3);
+
+	// a should have a property named 'count' and a property named 'count2',
+	// and a['count'] should be > 1, and < 3
+	check(a, 'a').has('count').gt(1).lt(3).owner.has('count2');
+	
+	// a should be in (1,3)∩(2,4)
+	check(a, 'a').and(check.policy.gt(1).lt(3), check.policy.gt(2).lt(4));
+
+	// // a should be in (1,3)∪(2,4)
+	check(a, 'a').or(check.policy.gt(1).lt(2), check.policy.gt(3).lt(4));
+
+	function myCheck(obj) {
+		return obj.length > 4;
+	}
+
+	// a should be an array and a.length > 4
+	check(a, 'a').and(check.policy.is('array'), myCheck);
+
+	// a should NOT be an even number in range [1,3]
+	check(param, 'param').not.and(
+		check.policy.is('number').not.lt(1).not.gt(3),
+		function (obj) {
+			return obj % 2 === 0;
+		});
+}
 ```
 
 

@@ -1,7 +1,10 @@
 {
   "name": "param-check",
-  "version": "0.1.0",
-  "description": "",
+  "version": "0.2.0",
+  "description": "A js library for checking parameters.",
+  "repository": {
+    "url": "https://github.com/yusangeng/param-check.git"
+  },
   "main": "index.js",
   "scripts": {
     "test": "test\\index.html"
