@@ -45,7 +45,8 @@ function setIsExternalSourceFileCallback(fn) {
 }
 
 function throwError(err) {
-	if (!pauseCallback &&
+	if (err.stack &&
+		!pauseCallback &&
 		err.message.indexOf('[PARAM-CHECK]') === 0) {
 		// 找到发生异常的外部代码
 		// 因为位置是给外部使用者看的，所以 pauseCallback 生效时，没有必要分析位置
