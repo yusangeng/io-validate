@@ -68,24 +68,24 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 	};
 	
 	for (var key in proto) {
-		if (proto.hasOwnProperty(key) &&
-			isFunction(proto[key])) {
-			if (chainingMethods &&
-				chainingMethods.indexOf(key) === -1) {
-				continue;
-			}
-			
-			Policy.prototype[key] = (function (fnName) {
-				return function () {
-					var self = this;
-					var args = Array.prototype.slice.call(arguments, 0);
-
-					return new Policy(function (that) {
-						return proto[fnName].apply(that, args);
-					}, self);
-				}
-			})(key);
+		if (!proto.hasOwnProperty(key) || !isFunction(proto[key])) {
+			continue;
 		}
+
+		if (chainingMethods && chainingMethods.indexOf(key) === -1) {
+			continue;
+		}
+			
+		Policy.prototype[key] = (function (fnName) {
+			return function () {
+				var self = this;
+				var args = Array.prototype.slice.call(arguments, 0);
+
+				return new Policy(function (that) {
+					return proto[fnName].apply(that, args);
+				}, self);
+			}
+		})(key);
 	}
 	
 	return new Policy();
