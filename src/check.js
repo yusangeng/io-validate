@@ -9,9 +9,8 @@
 
 var is = require('./is');
 var defineProperty = require('./defineProperty');
+var makePolicy = require('./makePolicy');
 var equal = require('deep-equal');
-
-
 
 var isFunction = is['function'];
 var isString = is['string'];
@@ -20,6 +19,13 @@ var isUndefined = is['undefined'];
 var isNull = is['null'];
 var isRegExp = is['regExp'];
 
+module.exports = {
+	check : check,
+	Checker : Checker,
+	NotChecker : NotChecker,
+	setCheckFailedCallback : setCheckFailedCallback
+};
+
 var checkFailedCallback = null;
 
 function setCheckFailedCallback(cb) {
@@ -27,11 +33,15 @@ function setCheckFailedCallback(cb) {
 }
 
 function throwError(err) {
+	var ignore = false;
+	
 	if (isFunction(checkFailedCallback)) {
-		checkFailedCallback(err);
+		ignore = checkFailedCallback(err);
 	}
 
-	throw err;
+	if (!ignore) {
+		throw err;
+	}
 }
 
 function assert(condition, message) {
@@ -42,7 +52,7 @@ function assert(condition, message) {
 
 function Checker(obj, name, owner) {
 	this.obj_ = obj;
-	this.name_ = name || '[anonymous]';
+	this.name_ = name || '[unknown]';
 	this.owner_ = owner;
 
 	try {
@@ -85,13 +95,18 @@ Checker.prototype._makeMessage = function (entry, args) {
 		reason = 'has NO own property: ' + getObjStr(args[0]);
 	} else if (entry === 'length') {
 		reason = 'has NO length';
+	} else if (entry == 'and') {
+		// args[0] 是执行失败的检查序号,args[1] 是具体原因
+		reason = 'FAILED when executing check[' + args[0] + '] of an "AND" check, detail: ' + (args[1] || 'unknown');
+	} else if (entry == 'or') {
+		reason = 'FAILED when executing an "OR" check, detail: {' + args.join(', ') + '}';
 	} else {
-		reason = '';
+		reason = 'for unknown reason';
 	}
 
 	var objValue = getObjStr(this.obj_);
 
-	return '[PARAM-CHECK] Check failed: ' + this.name_ + '(' + objValue + ') ' + reason + '. ';
+	return '[PARAM-CHECK] Check failure: ' + this.name_ + '(' + objValue + ') ' + reason + '.';
 }
 
 Checker.prototype.is = function () {
@@ -246,18 +261,111 @@ Checker.prototype.map = function (fn) {
 		}
 	} catch (e) {
 		var msg = '[PARAM-CHECK-INTERNAL] Map failed: ' + fn.toString();
-		throw new Error(msg);
+		throwError(new Error(msg));
 	}
 	
 	var str = isString(fn) ? '=>' + fn : '=>[anonymous function]';
 	return new Checker(mapObj, this.name_ + str, this);
 }
 
+Checker.prototype.and = function () {
+	var obj = this.obj_;
+	var errorMsg;
+
+	try {
+		var len = arguments.length;
+
+		for (var i = 0; i < len; ++i) {
+			var fn = arguments[i];
+			
+			if (isFunction(fn)) {
+				try {
+					var ret = fn(this.obj_);
+				} catch (err) {
+					errorMsg = err.message;
+					ret = false;
+				}
+
+				if (!ret) {
+					errorMsg = this._makeMessage('and', [i, errorMsg]);
+					break;
+				}
+			} else if (fn.isPolicy) {
+				fn.exec(this);
+			} else {
+				errorMsg = '[PARAM-CHECK-INTERNAL] Bad param: argument[' + i + '] is NOT a function or policy';
+				break;
+			}
+		}
+	} catch (e) {
+		errorMsg = e.message;
+	}
+	
+	if (errorMsg) {
+		throwError(new Error(errorMsg));
+	}
+
+	return this;
+}
+
+Checker.prototype.or = function () {
+	var obj = this.obj_;
+	var errorMsg;
+	var errorDetail = [];
+	var len = arguments.length;
+	var errorCount = 0;
+
+	for (var i = 0; i < len; ++i) {
+		var fn = arguments[i];
+		
+		if (isFunction(fn)) {
+			try {
+				var ret = fn(this.obj_);
+				
+				if (ret) {
+					break;
+				}
+			} catch (err) {
+				errorDetail.push(err.message);
+				errorCount++;
+				continue;
+			}
+
+			errorDetail.push('unknown');
+			errorCount++;
+		} else if (fn.isPolicy) {
+			try {
+				fn.exec(this);
+			} catch (err) {
+				errorDetail.push(err.message);
+				errorCount++;
+				continue;
+			}
+
+			break;
+		} else {
+			errorMsg = '[PARAM-CHECK-INTERNAL] Bad param: argument[' + i + '] is NOT a function or policy';
+			break;
+		}
+	}
+
+	if (errorMsg) {
+		// 优先抛出内部错误
+		throwError(new Error(errorMsg));
+	}
+
+	if (errorCount === len) {
+		throwError(new Error(this._makeMessage('or', errorDetail)));
+	}
+
+	return this;
+}
+
 function NotChecker(checker) {
 	this.checker_ = checker;
 }
 
-var arr = ['is', 'gt', 'lt', 'within', 'match', 'same', 'eq', 'has', 'length'];
+var arr = ['is', 'gt', 'lt', 'within', 'match', 'same', 'eq', 'has', 'length', 'and', 'or'];
 
 for (var i = 0; i < arr.length; ++i) {
 	var currName = arr[i];
@@ -284,7 +392,10 @@ for (var i = 0; i < arr.length; ++i) {
 			}
 
 			checkFailedCallback = cb;
-			assert(yes, that._makeMessage(name, args).replace(/NOT? /, ''));
+			assert(yes, that._makeMessage(name, args)
+				.replace('[PARAM-CHECK]', '[PARAM-CHECK][NOT-CHECK]')
+				.replace(/NOT? /, '')
+				.replace(/FAILED /, 'SUCCESS '));
 
 			return that;
 		}
@@ -295,8 +406,4 @@ function check(obj, name) {
 	return new Checker(obj, name);
 }
 
-module.exports = {
-	check : check,
-	Checker : Checker,
-	setCheckFailedCallback : setCheckFailedCallback
-};
+check.policy = makePolicy(Checker.prototype, ['not', 'owner']);

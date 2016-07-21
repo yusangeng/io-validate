@@ -512,3 +512,72 @@ describe('not', function () {
 		});	
 	});
 });
+
+describe('or', function () {
+	var testFn = function (a) {
+		check(a, 'a').or(check.policy.gt(1).lt(2), check.policy.gt(5).lt(6));
+	};
+	
+	var testFn2 = function (a) {
+		check(a, 'a').or(check.policy.gt(1).lt(2), function(obj) {
+			return Object.prototype.toString.call(obj) === '[object String]';
+		});
+	};
+	
+	it ('good param', function () {
+		testFn(1.5);
+		testFn(5.5);
+		testFn2(1.5);
+		testFn2("123");
+	});
+	
+	it ('bad param', function () {
+		shouldThrow(function () {
+			testFn();
+		});
+
+		shouldThrow(function () {
+			testFn("");
+		});
+		
+		shouldThrow(function () {
+			testFn(3);
+		});
+
+		shouldThrow(function () {
+			testFn2();
+		});	
+
+		shouldThrow(function () {
+			testFn2(3);
+		});			
+		
+		shouldThrow(function () {
+			testFn2({});
+		});
+	});
+});
+
+describe('and', function () {
+	var testFn = function (a) {
+		check(a, 'a').and(check.policy.gt(1).lt(3), check.policy.gt(2).lt(4));
+	};
+	
+	it('good param', function () {
+		testFn(2.5);
+	});
+	
+	it('bad param', function () {
+		shouldThrow(function () {
+			testFn();
+		});
+
+		shouldThrow(function () {
+			testFn(1.5);
+		});
+
+		shouldThrow(function () {
+			testFn("");
+		});
+	});
+});
