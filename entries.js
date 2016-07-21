@@ -11,6 +11,7 @@ var checkEntries = require('./src/check');
 var check = checkEntries.check;
 
 check.Checker = checkEntries.Checker;
-check.setCheckFailedCallback = checkEntries.setCheckFailedCallback;
+check.setCheckFailureCallback = checkEntries.setCheckFailureCallback;
+check.setIsExternalSourceFileCallback = checkEntries.setIsExternalSourceFileCallback;
 
 module.exports = check;

@@ -48,6 +48,10 @@
 	var expect = __webpack_require__(10).expect;
 	var shouldThrow = __webpack_require__(50);
 
+	check.setCheckFailureCallback(function (e) {
+		console.log(e.message);
+	});
+
 	describe('call check', function () {
 		it('should NOT throw', function () {
 			+function (a) {
@@ -8726,7 +8730,7 @@
 			fn()
 		} catch (e) {
 			err = e;
-			console.log(e);
+			//console.log(e);
 		}
 
 		expect(err).to.be.not.a('null');

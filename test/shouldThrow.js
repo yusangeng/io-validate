@@ -7,7 +7,7 @@ module.exports = function (fn) {
 		fn()
 	} catch (e) {
 		err = e;
-		console.log(e);
+		//console.log(e);
 	}
 
 	expect(err).to.be.not.a('null');

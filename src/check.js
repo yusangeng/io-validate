@@ -23,20 +23,51 @@ module.exports = {
 	check : check,
 	Checker : Checker,
 	NotChecker : NotChecker,
-	setCheckFailedCallback : setCheckFailedCallback
+	setCheckFailureCallback : setCheckFailureCallback,
+	setIsExternalSourceFileCallback : setIsExternalSourceFileCallback,
 };
 
-var checkFailedCallback = null;
+var checkFailureCallback = null;
 
-function setCheckFailedCallback(cb) {
-	checkFailedCallback = cb;
+function setCheckFailureCallback(cb) {
+	checkFailureCallback = cb;
+}
+
+var rexpPosition = /[^/\\:*?"<>|]+:\d+:\d+\)?$/;
+var pauseCallback = false;
+
+var isExternalSourceFile = function (line) {
+	return (line.indexOf('param-check.js') === -1);
+}
+
+function setIsExternalSourceFileCallback(fn) {
+	isExternalSourceFile = fn;
 }
 
 function throwError(err) {
+	if (!pauseCallback &&
+		err.message.indexOf('[PARAM-CHECK]') === 0) {
+		// 找到发生异常的外部代码
+		// 因为位置是给外部使用者看的，所以 pauseCallback 生效时，没有必要分析位置
+		var lines = err.stack.split('\n');
+		var len = lines.length;
+
+		for (var i = 1; i < len; ++i) {
+			var line = lines[i];
+			if (isExternalSourceFile(line)) {
+				var pos = rexpPosition.exec(line);
+				
+				pos = ' position: ' + pos[0] + '.';
+				err.message = err.message + pos;
+				break;
+			}
+		}
+	}
+
 	var ignore = false;
-	
-	if (isFunction(checkFailedCallback)) {
-		ignore = checkFailedCallback(err);
+
+	if (!pauseCallback && isFunction(checkFailureCallback)) {
+		ignore = checkFailureCallback(err);
 	}
 
 	if (!ignore) {
@@ -97,9 +128,10 @@ Checker.prototype._makeMessage = function (entry, args) {
 		reason = 'has NO length';
 	} else if (entry == 'and') {
 		// args[0] 是执行失败的检查序号,args[1] 是具体原因
-		reason = 'FAILED when executing check[' + args[0] + '] of an "AND" check, detail: ' + (args[1] || 'unknown');
+		reason = 'FAILED when executing check[' +
+			args[0] + '] of an "AND" check, detail: {' + (args[1] || 'unknown') + '}';
 	} else if (entry == 'or') {
-		reason = 'FAILED when executing an "OR" check, detail: {' + args.join(', ') + '}';
+		reason = 'FAILED when executing an "OR" check, detail: {' + args.join('}{') + '}';
 	} else {
 		reason = 'for unknown reason';
 	}
@@ -271,34 +303,34 @@ Checker.prototype.map = function (fn) {
 Checker.prototype.and = function () {
 	var obj = this.obj_;
 	var errorMsg;
+	var len = arguments.length;
 
-	try {
-		var len = arguments.length;
+	for (var i = 0; i < len; ++i) {
+		var fn = arguments[i];
+		
+		if (isFunction(fn)) {
+			try {
+				var ret = fn(this.obj_);
+			} catch (err) {
+				errorMsg = err.message;
+				ret = false;
+			}
 
-		for (var i = 0; i < len; ++i) {
-			var fn = arguments[i];
-			
-			if (isFunction(fn)) {
-				try {
-					var ret = fn(this.obj_);
-				} catch (err) {
-					errorMsg = err.message;
-					ret = false;
-				}
-
-				if (!ret) {
-					errorMsg = this._makeMessage('and', [i, errorMsg]);
-					break;
-				}
-			} else if (fn.isPolicy) {
-				fn.exec(this);
-			} else {
-				errorMsg = '[PARAM-CHECK-INTERNAL] Bad param: argument[' + i + '] is NOT a function or policy';
+			if (!ret) {
+				errorMsg = this._makeMessage('and', [i, errorMsg]);
 				break;
 			}
+		} else if (fn.isPolicy) {
+			try {
+				fn.exec(this);
+			} catch (e) {
+				errorMsg = this._makeMessage('and', [i, e.message]);
+				break;
+			}
+		} else {
+			errorMsg = '[PARAM-CHECK-INTERNAL] Bad param: argument[' + i + '] is NOT a function or policy';
+			break;
 		}
-	} catch (e) {
-		errorMsg = e.message;
 	}
 	
 	if (errorMsg) {
@@ -375,9 +407,9 @@ for (var i = 0; i < arr.length; ++i) {
 			var args = Array.prototype.slice.call(arguments, 0);
 			var that = this.checker_;
 			var yes = false;
-			var cb = checkFailedCallback;
+			var pauseCallbackBak = pauseCallback;
 			
-			checkFailedCallback = null;
+			pauseCallback = true;
 
 			try {
 				var ret = that[name].apply(that, args);
@@ -386,12 +418,12 @@ for (var i = 0; i < arr.length; ++i) {
 					yes = true;
 				} else {
 					// 内部错误
-					checkFailedCallback = cb;
 					throw e;
 				}
+			} finally {
+				pauseCallback = pauseCallbackBak;
 			}
 
-			checkFailedCallback = cb;
 			assert(yes, that._makeMessage(name, args)
 				.replace('[PARAM-CHECK]', '[PARAM-CHECK][NOT-CHECK]')
 				.replace(/NOT? /, '')

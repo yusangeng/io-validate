@@ -2,6 +2,10 @@
 var expect = require('chai').expect;
 var shouldThrow = require('./shouldThrow');
 
+check.setCheckFailureCallback(function (e) {
+	console.log(e.message);
+});
+
 describe('call check', function () {
 	it('should NOT throw', function () {
 		+function (a) {
