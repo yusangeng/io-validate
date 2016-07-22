@@ -14,7 +14,7 @@ module.exports = {
 	'empty' : isEmpty,
 	'undefined' : isUndefined,
 	'null' : isNull,
-	'naN' : isNaN,
+	'nan' : isNaN,
 	'number' : isNumber,
 	'string' : isString,
 	'boolean' : isBoolean,
@@ -23,6 +23,7 @@ module.exports = {
 	'error' : isError,
 	'function' : isFunction,
 	'object' : isObject,
+	'objectLike' : isObjectLike,
 	'element' : isElement,
 	'arguments' : isArguments,
 };
@@ -194,8 +195,17 @@ function isFunction(o) {
  * @return o为对象返回true，否则返回false
  */
 function isObject(o) {
-	var type = typeof o;
-	return (type === 'function' || (type === 'object' && !!o));
+  var type = typeof o;
+  return !!o && (type == 'object' || type == 'function');
+}
+
+/**
+ * 是否为仿对象
+ * @param o 待判断对象
+ * @return o为对象返回true，否则返回false
+ */
+function isObjectLike(o) {
+  return (!!o && (typeof o == 'object'));
 }
 
 /**
@@ -204,7 +214,7 @@ function isObject(o) {
  * @return o为Dom Element返回true，否则返回false
  */
 function isElement(o) {
-	return (!!o && o.nodeType === 1);
+	return (!!o && (o.nodeType === 1) && isObjectLike(o));
 }
 
 /**
@@ -213,5 +223,9 @@ function isElement(o) {
  * @return o为参数返回true，否则返回false
  */
 function isArguments(o) {
-	return (o && !!o['callee']);
+	var op = Object.prototype;
+	var argsTag = '[object Arguments]';
+
+	return isArrayLike(o) && op.hasOwnProperty.call(o, 'callee') &&
+		(!op.propertyIsEnumerable.call(o, 'callee') || op.toString.call(o) == argsTag);
 }
