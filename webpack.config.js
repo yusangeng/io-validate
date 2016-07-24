@@ -1,23 +1,18 @@
 var webpack = require('webpack');
-//var commonsPlugin = new webpack.optimize.CommonsChunkPlugin('common.js');
 
 module.exports = {
-	//plugins : [commonsPlugin],
-
 	entry : {
-		'dist/param-check' : './expose.js',
+		'dist/param-check' : './index.js',
 		'test/tests.bundle' : './test/tests.js'
 	},
 
 	output : {
+		libraryTarget: 'umd',
+		library: 'param-check',
 		filename : '[name].js'
 	},
 
 	module : {
-		loaders : [{
-				test : /expose.js$/,
-				loader : 'expose-loader?check'
-			}
-		]
+		loaders : []
 	}
 };
