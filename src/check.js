@@ -12,12 +12,25 @@ var defineProperty = require('./defineProperty');
 var makePolicy = require('./makePolicy');
 var equal = require('deep-equal');
 
-var isFunction = is['function'];
-var isString = is['string'];
-var isNumber = is['number'];
-var isUndefined = is['undefined'];
-var isNull = is['null'];
-var isRegExp = is['regExp'];
+var isFunction = is.isFunction;
+var isString = is.isString;
+var isNumber = is.isNumber;
+var isUndefined = is.isUndefined;
+var isNull = is.isNull;
+var isExist = is.isExist;
+var isRegExp = is.isRegExp;
+
+var lowerIs = {};
+
+for (var entry in is) {
+	var fn = is[entry];
+
+	if (!is.hasOwnProperty(entry) || !isFunction(fn)) {
+		continue;
+	}
+	
+	lowerIs[entry.toLowerCase().replace(/^is/, '')] = fn;
+}
 
 module.exports = {
 	check : check,
@@ -127,6 +140,8 @@ Checker.prototype._makeMessage = function (entry, args) {
 		reason = 'is NOT equal to ' + getObjStr(args[0]);
 	} else if (entry === 'has') {
 		reason = 'has NO own property: ' + getObjStr(args[0]);
+	} else if (entry === 'got') {
+		reason = 'has NOT got property: ' + getObjStr(args[0]);
 	} else if (entry === 'length') {
 		reason = 'has NO length';
 	} else if (entry == 'and') {
@@ -167,24 +182,44 @@ Checker.prototype.is = function () {
 	var len = arguments.length;
 	var obj = this.obj_;
 	var yes = false;
+	var types = [];
 
 	for (var i = 0; i < len; ++i) {
 		var key = arguments[i];
-		assert(isString(key), '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is NOT string');
-		var fn = is[key];
+		
+		assert(isString(key), '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is NOT string');		
+		key = key.toLowerCase();
+		types.push(key)
 
-		if (is.hasOwnProperty(key) && isFunction(fn)) {
+		var fn = lowerIs[key];
+
+		if (lowerIs.hasOwnProperty(key) && isFunction(fn)) {
 			if (fn(obj)) {
 				yes = true;
 				break;
 			}
+		} else {
+			assert(false, '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is bad');
 		}
 	}
 
-	assert(yes, this._makeMessage('is', arguments));
+	assert(yes, this._makeMessage('is', types));
 
 	return this;
 };
+
+for (var entry in is) {
+	var fn = is[entry];
+
+	if (!is.hasOwnProperty(entry) || !isFunction(fn)) {
+		continue;
+	}
+	
+	Checker.prototype[entry] = function () {
+		var obj = this.obj_;
+		assert(fn(obj), this._makeMessage('is', [entry.replace(/^is/, '')]));
+	}
+}
 
 Checker.prototype.gt = function (n) {
 	assert(isNumber(n), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a number');
@@ -274,14 +309,20 @@ Checker.prototype.eq = function (other) {
 };
 
 Checker.prototype.has = function (key) {
-	assert(isString(key) || isNumber(key), '[PARAM-CHECK-INTERNAL] key is neither a string nor a number');
-	
 	var obj = this.obj_;
 
-	assert(!isUndefined(obj) &&
-		!isNull(obj) &&
+	assert(isExist(obj) &&
 		obj.hasOwnProperty &&
 		obj.hasOwnProperty(key), this._makeMessage('has', arguments));
+
+	return new Checker(obj[key], this.name_ + '.' + key, this);
+}
+
+Checker.prototype.got = function (key) {
+	var obj = this.obj_;
+
+	assert(isExist(obj), this._makeMessage('is', ['exist']));
+	assert(!isUndefined(obj[key]), this._makeMessage('got', arguments));
 
 	return new Checker(obj[key], this.name_ + '.' + key, this);
 }

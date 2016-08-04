@@ -11,7 +11,7 @@
 var is = require('./is');
 var defineProperty = require('./defineProperty');
 
-var isFunction = is['function'];
+var isFunction = is.isFunction;
 
 module.exports = makePolicy;
 

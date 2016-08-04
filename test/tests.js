@@ -1,6 +1,7 @@
 
 var expect = require('chai').expect;
 var shouldThrow = require('./shouldThrow');
+var check = window['param-check'];
 
 check.setCheckFailureCallback(function (e) {
 	//console.log(e.stack);
@@ -447,6 +448,31 @@ describe('has, owner', function () {
 		shouldThrow(function () {
 			testFn([1,2,3]);
 		});		
+	});
+});
+
+describe('got', function () {
+	function Base() {
+		this.a = 1;
+	}
+	
+	function Sub() {
+		this.b = 2;
+	}
+	
+	Sub.prototype = new Base();
+	
+	var obj = new Sub();
+	
+	it ('good param', function () {
+		check(obj, 'obj').got('a');
+		check(obj, 'obj').got('b');
+	});
+	
+	it ('bad param', function () {
+		shouldThrow(function () {
+			check(obj, 'obj').got('c');
+		});
 	});
 });
 
