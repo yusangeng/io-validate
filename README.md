@@ -1,13 +1,13 @@
 # param-check
 A js library for checking parameters.
 
-## install
+## Install
 
 ```
 npm install param-check
 ```
 
-## Using
+## Usage
 
 ### Loading
 
@@ -40,14 +40,11 @@ check(foobar).gt(1).lt(3);
 
 check.setCheckFailureCallback(function (err) {
 	console.log(err.message);
-	
-	ignore = false;
-	
 	// if return false, err would be throw
-	return ignore;
+	return true;
 });
 
-var theSome = {};
+var something = {};
 
 function foobar(a) {
 
@@ -66,11 +63,11 @@ function foobar(a) {
 	// a should match regexp /\w\d+/
 	check(a, 'a').match(/\w\d+/);
 
-	// a should be the same object to theSome;
-	check(a, 'a').same(theSome);
+	// a should be the same object to something;
+	check(a, 'a').same(something);
 	
-	// a should be deep-equal to theSome;
-	check(a, 'a').eq(theSome);
+	// a should be deep-equal to something;
+	check(a, 'a').eq(something);
 	
 	// a should have a property named 'count'
 	check(a, 'a').has('count');
