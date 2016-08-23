@@ -47,6 +47,8 @@ check.setCheckFailureCallback(function (err) {
 var something = {};
 
 function foobar(a) {
+	// a should be a string
+	check(a, 'a').isString();
 
 	// a should be a string or number
 	check(a, 'a').is('string', 'number');
