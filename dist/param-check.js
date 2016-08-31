@@ -309,12 +309,12 @@ return /******/ (function(modules) { // webpackBootstrap
 			continue;
 		}
 		
-		(function (entry) {
+		(function (entry, fn) {
 			Checker.prototype[entry] = function () {
 				var obj = this.obj_;
 				assert(fn(obj), this._makeMessage('is', [entry.replace(/^is/, '')]));
 			}
-		})(entry);
+		})(entry, fn);
 	}
 
 	Checker.prototype.gt = function (n) {
