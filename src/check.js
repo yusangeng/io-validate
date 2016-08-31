@@ -219,6 +219,8 @@ for (var entry in is) {
 		Checker.prototype[entry] = function () {
 			var obj = this.obj_;
 			assert(fn(obj), this._makeMessage('is', [entry.replace(/^is/, '')]));
+			
+			return this;
 		}
 	})(entry, fn);
 }
