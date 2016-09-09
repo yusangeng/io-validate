@@ -27,10 +27,10 @@ function defineProperty(that, key, getter, setter) {
 
 	if (Object.defineProperty) {
 		Object.defineProperty(that, key, {
-			configurable : true,
-			enumerable : true,
-			get : getter,
-			set : setter
+			configurable: true,
+			enumerable: true,
+			get: getter,
+			set: setter
 		});
 	} else if (Object.prototype.__defineGetter__) {
 		Object.prototype.__defineGetter__.call(that, key, getter);

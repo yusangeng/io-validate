@@ -31,17 +31,17 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 	}
 
 	Policy.prototype.isPolicy = true;
-	
-	Policy.prototype._initCustomProps = function (chainingProps) {
+
+	Policy.prototype._initCustomProps = function(chainingProps) {
 		if (chainingProps && chainingProps.length) {
 			var len = chainingProps.length;
 			var self = this;
 
 			for (var i = 0; i < len; ++i) {
 				var propName = chainingProps[i];
-				var fn = (function (prop) {
-					return function () {
-						return new Policy(function (that) {
+				var fn = (function(prop) {
+					return function() {
+						return new Policy(function(that) {
 							return that[prop];
 						}, self, prop);
 					}
@@ -52,7 +52,7 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 		}
 	};
 
-	Policy.prototype.exec = function (that) {
+	Policy.prototype.exec = function(that) {
 		var myThat = that;
 		var prev = this.prev_;
 		var fn = this.fn_;
@@ -64,20 +64,20 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 		if (isFunction(fn)) {
 			return fn(myThat);
 		}
-		
+
 		return that;
 	};
-	
-	Policy.prototype.path = function () {
+
+	Policy.prototype.path = function() {
 		var prev = this.prev_;
 		var name = this.name_;
 		var ret = prev ? prev.path() : '';
-		
+
 		ret += '.' + this.name_;
-		
+
 		return ret;
 	};
-	
+
 	for (var key in proto) {
 		if (!proto.hasOwnProperty(key) || !isFunction(proto[key])) {
 			continue;
@@ -86,18 +86,18 @@ function makePolicy(proto, chainingProps, chainingMethods) {
 		if (chainingMethods && chainingMethods.indexOf(key) === -1) {
 			continue;
 		}
-			
-		Policy.prototype[key] = (function (fnName) {
-			return function () {
+
+		Policy.prototype[key] = (function(fnName) {
+			return function() {
 				var self = this;
 				var args = Array.prototype.slice.call(arguments, 0);
 
-				return new Policy(function (that) {
+				return new Policy(function(that) {
 					return that[fnName].apply(that, args);
 				}, self, fnName);
 			}
 		})(key);
 	}
-	
+
 	return new Policy(null, null, 'policy');
 }
