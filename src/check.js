@@ -8,6 +8,7 @@
 'use strict';
 
 var is = require('./is');
+var makeMessage = require('./makeMessage');
 var defineProperty = require('./defineProperty');
 var makePolicy = require('./makePolicy');
 var equal = require('deep-equal');
@@ -20,36 +21,15 @@ var isNull = is.isNull;
 var isExist = is.isExist;
 var isRegExp = is.isRegExp;
 
-var lowerIs = {};
-
-for (var entry in is) {
-	var fn = is[entry];
-
-	if (!is.hasOwnProperty(entry) || !isFunction(fn)) {
-		continue;
-	}
-	
-	lowerIs[entry.toLowerCase().replace(/^is/, '')] = fn;
-}
-
 module.exports = {
-	check : check,
-	Checker : Checker,
-	NotChecker : NotChecker,
-	setCheckFailureCallback : setCheckFailureCallback,
-	setIsExternalSourceFileCallback : setIsExternalSourceFileCallback,
+	check: check,
+	Checker: Checker,
 };
-
-var checkFailureCallback = null;
-
-function setCheckFailureCallback(cb) {
-	checkFailureCallback = cb;
-}
 
 var rexpPosition = /[^/\\:*?"<>|]+:\d+(?:\:\d+)?\)?$/;
 var pauseCallback = false;
 
-var isExternalSourceFile = function (line) {
+var isExternalSourceFile = function(line) {
 	return (line.indexOf('param-check.js') === -1);
 }
 
@@ -80,35 +60,27 @@ function throwError(err) {
 		}
 	}
 
-	var ignore = false;
-
-	if (!pauseCallback && isFunction(checkFailureCallback)) {
-		ignore = checkFailureCallback(err);
-	}
-
-	if (!ignore) {
-		throw err;
-	}
+	throw err;
 }
 
-function assert(condition, message) {
+function assert(condition, messageFn) {
 	if (!condition) {
-		throwError(new Error(message));
+		throwError(new Error(messageFn()));
 	}
 }
 
 function Checker(obj, name, owner) {
 	this.obj_ = obj;
-	this.name_ = name || '[unknown]';
+	this.name_ = name || '[unknown object]';
 	this.owner_ = owner;
 
 	try {
-		defineProperty(this, 'not', function () {
+		defineProperty(this, 'not', function() {
 			var ret = this.not_ || (this.not_ = new NotChecker(this));
 			return ret;
 		});
-		
-		defineProperty(this, 'owner', function () {
+
+		defineProperty(this, 'owner', function() {
 			return this.owner_;
 		});
 	} catch (e) {
@@ -117,68 +89,7 @@ function Checker(obj, name, owner) {
 	}
 }
 
-function getObjStr(obj) {
-	return isString(obj) ? ('"' + obj + '"') : ('' + obj);
-}
-
-Checker.prototype._makeMessage = function (entry, args) {
-	var reason;
-	
-	if (entry === 'is') {
-		reason = 'is NOT ' + Array.prototype.join.call(args, ', ');
-	} else if (entry === 'gt') {
-		reason = 'is NOT greater than ' + getObjStr(args[0]);
-	} else if (entry === 'lt') {
-		reason = 'is NOT less than ' + getObjStr(args[0]);
-	} else if (entry === 'within') {
-		reason = 'is NOT in ranges: ' + Array.prototype.join.call(args, ', ');
-	} else if (entry === 'match') {
-		reason = 'does NOT match regexp: ' + getObjStr(args[0]);
-	} else if (entry === 'same') {
-		reason = 'is NOT the same object to ' +getObjStr(args[0]);
-	} else if (entry === 'eq') {
-		reason = 'is NOT equal to ' + getObjStr(args[0]);
-	} else if (entry === 'has') {
-		reason = 'has NO own property: ' + getObjStr(args[0]);
-	} else if (entry === 'got') {
-		reason = 'has NOT got property: ' + getObjStr(args[0]);
-	} else if (entry === 'length') {
-		reason = 'has NO length';
-	} else if (entry == 'and') {
-		// args[0] 是执行失败的检查序号,args[1] 是具体原因
-		var no = args[0];
-		var detail = args[1] || 'unknown';
-
-		if (detail.isPolicy) {
-			detail = detail.path();
-		}
-
-		reason = 'FAILED when executing check[' +
-			no + '] of an "AND" check, detail: {' + detail + '}';
-	} else if (entry == 'or') {
-		var mapArgs = [];
-		
-		for (var i = 0; i < args.length; ++i) {
-			var detail = args[i] || 'unknown';
-
-			if (detail.isPolicy) {
-				detail = detail.path();
-			}
-			
-			mapArgs.push(detail);
-		}
-		
-		reason = 'FAILED when executing an "OR" check, detail: {' + mapArgs.join('}{') + '}';
-	} else {
-		reason = 'for unknown reason';
-	}
-
-	var objValue = getObjStr(this.obj_);
-
-	return '[PARAM-CHECK] Check failure: ' + this.name_ + '(' + objValue + ') ' + reason + '.';
-}
-
-Checker.prototype.is = function () {
+Checker.prototype.is = function() {
 	var len = arguments.length;
 	var obj = this.obj_;
 	var yes = false;
@@ -186,8 +97,8 @@ Checker.prototype.is = function () {
 
 	for (var i = 0; i < len; ++i) {
 		var key = arguments[i];
-		
-		assert(isString(key), '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is NOT string');		
+
+		assert(isString(key), '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is NOT string');
 		key = key.toLowerCase();
 		types.push(key)
 
@@ -214,28 +125,28 @@ for (var entry in is) {
 	if (!is.hasOwnProperty(entry) || !isFunction(fn)) {
 		continue;
 	}
-	
-	(function (entry, fn) {
-		Checker.prototype[entry] = function () {
+
+	(function(entry, fn) {
+		Checker.prototype[entry] = function() {
 			var obj = this.obj_;
 			assert(fn(obj), this._makeMessage('is', [entry.replace(/^is/, '')]));
-			
+
 			return this;
 		}
 	})(entry, fn);
 }
 
-Checker.prototype.gt = function (n) {
+Checker.prototype.gt = function(n) {
 	assert(isNumber(n), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a number');
 	assert(this.obj_ > n, this._makeMessage('gt', arguments));
-	
+
 	return this;
 };
 
-Checker.prototype.lt = function (n) {
+Checker.prototype.lt = function(n) {
 	assert(isNumber(n), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a number');
 	assert(this.obj_ < n, this._makeMessage('lt', arguments));
-	
+
 	return this;
 };
 
@@ -246,16 +157,16 @@ function getRangeFn(range) {
 	var fn = rangeFns[range];
 
 	if (fn) return fn;
-	
+
 	var match = rexpRange.exec(range);
-	
+
 	assert(match && match.length === 5, '[PARAM-CHECK-INTERNAL] Bad range string: ' + range);
-	
+
 	var op1 = (match[1] === '[') ? '>=' : '>';
 	var op2 = (match[2] === ']') ? '<=' : '<';
 	var lowerBound = parseFloat(match[2]);
 	var higherBound = parseFloat(match[3]);
-	
+
 	var fnSource = ('return (n $op1 $lowerBound) && (n $op2 $higherBound);')
 		.replace('$op1', op1)
 		.replace('$lowerBound', lowerBound)
@@ -263,13 +174,13 @@ function getRangeFn(range) {
 		.replace('$higherBound', higherBound);
 
 	fn = rangeFns[range] = new Function(['n'], fnSource);
-	
+
 	return fn;
 }
 
-Checker.prototype.within = function () {
+Checker.prototype.within = function() {
 	var len = arguments.length;
-	
+
 	if (len === 0) {
 		return this;
 	}
@@ -289,30 +200,30 @@ Checker.prototype.within = function () {
 	}
 
 	assert(yes, this._makeMessage('within', arguments));
-	
+
 	return this;
 };
 
-Checker.prototype.match = function (rexp) {
+Checker.prototype.match = function(rexp) {
 	var obj = this.obj_;
 
 	assert(isRegExp(rexp), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a regexp');
 	assert(isString(obj) && rexp.test(obj), this._makeMessage('match', arguments));
-	
+
 	return this;
 }
 
-Checker.prototype.same = function (other) {
+Checker.prototype.same = function(other) {
 	assert((this.obj_ === other), this._makeMessage('same', arguments));
 	return this;
 };
 
-Checker.prototype.eq = function (other) {
+Checker.prototype.eq = function(other) {
 	assert(equal(this.obj_, other), this._makeMessage('eq', arguments));
 	return this;
 };
 
-Checker.prototype.has = function (key) {
+Checker.prototype.has = function(key) {
 	var obj = this.obj_;
 
 	assert(isExist(obj) &&
@@ -322,7 +233,7 @@ Checker.prototype.has = function (key) {
 	return new Checker(obj[key], this.name_ + '.' + key, this);
 }
 
-Checker.prototype.got = function (key) {
+Checker.prototype.got = function(key) {
 	var obj = this.obj_;
 
 	assert(isExist(obj), this._makeMessage('is', ['exist']));
@@ -331,17 +242,17 @@ Checker.prototype.got = function (key) {
 	return new Checker(obj[key], this.name_ + '.' + key, this);
 }
 
-Checker.prototype.length = function () {
+Checker.prototype.length = function() {
 	var obj = this.obj_;
 
 	assert(!isUndefined(obj) &&
 		!isNull(obj) &&
 		isNumber(obj.length), this._makeMessage('length', arguments));
-	
+
 	return new Checker(obj.length, this.name_ + '.length', this);
 }
 
-Checker.prototype.map = function (fn) {
+Checker.prototype.map = function(fn) {
 	var obj = this.obj_;
 	var mapObj;
 
@@ -362,19 +273,19 @@ Checker.prototype.map = function (fn) {
 		var msg = '[PARAM-CHECK-INTERNAL] Map failed: ' + fn.toString();
 		throwError(new Error(msg));
 	}
-	
+
 	var str = isString(fn) ? '=>' + fn : '=>[anonymous function]';
 	return new Checker(mapObj, this.name_ + str, this);
 }
 
-Checker.prototype.and = function () {
+Checker.prototype.and = function() {
 	var obj = this.obj_;
 	var errorMsg;
 	var len = arguments.length;
 
 	for (var i = 0; i < len; ++i) {
 		var fn = arguments[i];
-		
+
 		if (isFunction(fn)) {
 			try {
 				var ret = fn(this.obj_);
@@ -399,7 +310,7 @@ Checker.prototype.and = function () {
 			break;
 		}
 	}
-	
+
 	if (errorMsg) {
 		throwError(new Error(errorMsg));
 	}
@@ -407,7 +318,7 @@ Checker.prototype.and = function () {
 	return this;
 }
 
-Checker.prototype.or = function () {
+Checker.prototype.or = function() {
 	var obj = this.obj_;
 	var errorMsg;
 	var errorDetail = [];
@@ -416,11 +327,11 @@ Checker.prototype.or = function () {
 
 	for (var i = 0; i < len; ++i) {
 		var fn = arguments[i];
-		
+
 		if (isFunction(fn)) {
 			try {
 				var ret = fn(this.obj_);
-				
+
 				if (ret) {
 					break;
 				}
@@ -469,13 +380,13 @@ var arr = ['is', 'gt', 'lt', 'within', 'match', 'same', 'eq', 'has', 'length', '
 for (var i = 0; i < arr.length; ++i) {
 	var currName = arr[i];
 
-	NotChecker.prototype[currName] = (function (name) {
-		return function () {
+	NotChecker.prototype[currName] = (function(name) {
+		return function() {
 			var args = Array.prototype.slice.call(arguments, 0);
 			var that = this.checker_;
 			var yes = false;
 			var pauseCallbackBak = pauseCallback;
-			
+
 			pauseCallback = true;
 
 			try {
