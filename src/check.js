@@ -278,6 +278,8 @@ Checker.prototype.map = function(fn) {
 	return new Checker(mapObj, this.name_ + str, this);
 }
 
+Checker.prototype.meet = Checker.prototype.map;
+
 Checker.prototype.and = function() {
 	var obj = this.obj_;
 	var errorMsg;
