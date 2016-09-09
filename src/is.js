@@ -8,26 +8,26 @@
 'use strict';
 
 module.exports = {
-	'isArray' : isArray,
-	'isArrayLike' : isArrayLike,
-	'isExist' : isExist,
-	'isEmpty' : isEmpty,
-	'isUndefined' : isUndefined,
-	'isNull' : isNull,
-	'isNaN' : isNaN,
-	'isNumber' : isNumber,
-	'isString' : isString,
-	'isBoolean' : isBoolean,
-	'isDate' : isDate,
-	'isRegExp' : isRegExp,
-	'isError' : isError,
-	'isFunction' : isFunction,
-	'isObject' : isObject,
-	'isPlainObject' : isPlainObject,
-	'isObjectLike' : isObjectLike,
-	'isElement' : isElement,
-	'isArguments' : isArguments,
-	'isBasic' : isBasic,
+	'isArray': isArray,
+	'isArrayLike': isArrayLike,
+	'isExist': isExist,
+	'isEmpty': isEmpty,
+	'isUndefined': isUndefined,
+	'isNull': isNull,
+	'isNaN': isNaN,
+	'isNumber': isNumber,
+	'isString': isString,
+	'isBoolean': isBoolean,
+	'isDate': isDate,
+	'isRegExp': isRegExp,
+	'isError': isError,
+	'isFunction': isFunction,
+	'isObject': isObject,
+	'isPlainObject': isPlainObject,
+	'isObjectLike': isObjectLike,
+	'isElement': isElement,
+	'isArguments': isArguments,
+	'isBasic': isBasic,
 };
 
 /**
@@ -85,8 +85,8 @@ function isEmpty(o) {
 	} else if (isArrayLike(o) && o.length === 0) {
 		// 空数组
 		return true;
-	} else if (o.constructor && o.constructor === Object) {
-		// 空对象，只有Object可以为空，其子类不可为空
+	} else if (isPlainObject(o)) {
+		// 空对象，只有 PlainObject 可以为空
 		for (var key in o) {
 			if (o.hasOwnProperty(key)) {
 				return false;
@@ -152,7 +152,7 @@ function isString(o) {
  */
 function isBoolean(o) {
 	return o === true || o === false ||
-	Object.prototype.toString.call(o) === '[object Boolean]';
+		Object.prototype.toString.call(o) === '[object Boolean]';
 }
 
 /**
@@ -201,6 +201,11 @@ function isObject(o) {
 	return !!o && (type == 'object' || type == 'function');
 }
 
+/**
+ * 是否为字面量对象
+ * @param obj 目标对象
+ * @return
+ */
 function isPlainObject(obj) {
 	// from jQuery
 	// 判断是否非window和DOM对象的对象，
@@ -224,21 +229,12 @@ function isPlainObject(obj) {
 }
 
 /**
- * 是否为仿对象
- * @param o 目标对象
- * @return
- */
-function isObjectLike(o) {
-	return (!!o && (typeof o == 'object'));
-}
-
-/**
  * 是否为DOM Element
  * @param o 目标对象
  * @return
  */
 function isElement(o) {
-	return (!!o && o.nodeType === 1 && isObjectLike(o));
+	return (!!o && o.nodeType === 1);
 }
 
 /**
@@ -251,7 +247,7 @@ function isArguments(o) {
 	var argsTag = '[object Arguments]';
 
 	return isArrayLike(o) && op.hasOwnProperty.call(o, 'callee') &&
-	(!op.propertyIsEnumerable.call(o, 'callee') || op.toString.call(o) == argsTag);
+		(!op.propertyIsEnumerable.call(o, 'callee') || op.toString.call(o) == argsTag);
 }
 
 /**
