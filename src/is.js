@@ -2,12 +2,12 @@
  * @file is.js
  * @author Y3G
  * @fileoverview
- * 检测数据类型
+ * 数据类型检测
  */
 
 'use strict';
 
-module.exports = {
+var is = {
 	'isArray': isArray,
 	'isArrayLike': isArrayLike,
 	'isExist': isExist,
@@ -29,6 +29,30 @@ module.exports = {
 	'isArguments': isArguments,
 	'isBasic': isBasic,
 };
+
+(function makeLowerCase(is) {
+	var lowerIs = {};
+
+	for (var key in is) {
+		var fn = is[key];
+
+		if (!is.hasOwnProperty(key) || !isFunction(fn)) {
+			continue;
+		}
+
+		lowerIs[key.toLowerCase().replace(/^is/, '')] = fn;
+	}
+
+	for (var key in lowerIs) {
+		if (!lowerIs.hasOwnProperty(key)) {
+			continue;
+		}
+
+		is[key] = fn;
+	}
+})(is);
+
+module.exports = is;
 
 /**
  * 是否为数组
