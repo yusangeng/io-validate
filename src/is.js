@@ -24,7 +24,6 @@ var is = {
 	'isFunction': isFunction,
 	'isObject': isObject,
 	'isPlainObject': isPlainObject,
-	'isObjectLike': isObjectLike,
 	'isElement': isElement,
 	'isArguments': isArguments,
 	'isBasic': isBasic,
@@ -48,7 +47,7 @@ var is = {
 			continue;
 		}
 
-		is[key] = fn;
+		is[key] = lowerIs[key];
 	}
 })(is);
 
