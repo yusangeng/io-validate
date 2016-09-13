@@ -8,7 +8,7 @@ module.exports = {
 
 	output : {
 		libraryTarget: 'umd',
-		library: 'param-check',
+		library: 'paramCheck',
 		filename : '[name].js'
 	},
 
