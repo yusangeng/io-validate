@@ -1,12 +1,7 @@
 
 var expect = require('chai').expect;
 var shouldThrow = require('./shouldThrow');
-var check = window['param-check'];
-
-check.setCheckFailureCallback(function (e) {
-	//console.log(e.stack);
-	console.log(e.message);
-});
+var check = window.paramCheck;
 
 describe('call check', function () {
 	it('should NOT throw', function () {
@@ -20,6 +15,70 @@ describe('call check', function () {
 	
 describe('is', function () {
 	it('good param', function () {
+		+function (a) {
+			check(a, 'a').isArray();
+		}([]);
+		
+		+function (a) {
+			check(a, 'a').isArrayLike();
+		}({length:1});
+		
+		+function (a) {
+			check(a, 'a').isExist();
+		}({});
+		
+		+function (a) {
+			check(a, 'a').isEmpty();
+		}([]);
+		
+		+function (a) {
+			check(a, 'a').isUndefined();
+		}();
+		
+		+function (a) {
+			check(a, 'a').isNull();
+		}(null);
+		
+		+function (a) {
+			check(a, 'a').isNumber();
+		}(1);
+		
+		+function (a) {
+			check(a, 'a').isString();
+		}('1');
+		
+		+function (a) {
+			check(a, 'a').isBoolean();
+		}(true);
+		
+		+function (a) {
+			check(a, 'a').isDate();
+		}(new Date());
+		
+		+function (a) {
+			check(a, 'a').isRegExp();
+		}(/.*/);
+		
+		+function (a) {
+			check(a, 'a').isError();
+		}(new Error);
+		
+		+function (a) {
+			check(a, 'a').isFunction();
+		}(function () {});
+		
+		+function (a) {
+			check(a, 'a').isObject();
+		}({});
+		
+		+function (a) {
+			check(a, 'a').isElement();
+		}(document.querySelector('div'));
+		
+		+function (a) {
+			check(a, 'a').isArguments();
+		}(arguments);
+
 		+function (a) {
 			check(a, 'a').is('array');
 		}([]);
@@ -171,7 +230,7 @@ describe('is', function () {
 		shouldThrow(function () {
 			+function (a) {
 				check(a, 'a').is('object');
-			}("");
+			}(1);
 		});
 		
 		shouldThrow(function () {
@@ -193,6 +252,44 @@ describe('is', function () {
 		});
 	});
 });
+
+describe('instanceOf', function () {
+	function F() {}
+	function G() {}
+	
+	it('good param', function () {
+		var f = new F();
+		var g = new G();
+		
+		check(f, 'f').instanceOf(F);
+		check(g, 'g').instanceOf(G);
+	});
+	
+	it('bad param', function () {
+		shouldThrow(function () {
+			check().instanceOf(G);
+		});
+		
+		shouldThrow(function () {
+			check(1).instanceOf(G);
+		});
+		
+		shouldThrow(function () {
+			check('').instanceOf(G);
+		});
+
+		var f = new F();
+		var g = new G();
+		
+		shouldThrow(function () {
+			check(f, 'f').instanceOf(G);
+		});
+		
+		shouldThrow(function () {
+			check(g, 'g').instanceOf(F);
+		});
+	});
+})
 
 describe('lt, gt', function () {
 	it ('good param', function () {
@@ -233,6 +330,43 @@ describe('lt, gt', function () {
 		});
 	});
 });
+
+describe('elt, egt', function () {
+	it ('good param', function () {
+		+function (a) {
+			check(a, 'a').egt(1).elt(2);
+		}(1.234);
+		
+		+function (a) {
+			check(a, 'a').egt(1).elt(2);
+		}(1);
+		
+		+function (a) {
+			check(a, 'a').egt(1).elt(2);
+		}(2);
+	});
+	
+	it ('bad param', function () {
+		shouldThrow(function () {
+			+function (a) {
+				check(a, 'a').egt(1).elt(2);
+			}();
+		});
+		
+		shouldThrow(function () {
+			+function (a) {
+				check(a, 'a').egt(1).elt(2);
+			}('');
+		});
+		
+		shouldThrow(function () {
+			+function (a) {
+				check(a, 'a').egt(1).elt(2);
+			}(0);
+		});
+	});
+});
+
 
 describe('within', function () {
 	var testFn = function (a) {
@@ -589,6 +723,35 @@ describe('or', function () {
 	});
 });
 
+
+describe('not.or', function () {
+	var testFn = function (a) {
+		check(a, 'a').not.or(check.policy.is('string'), check.policy.is('number').not.lt(1).not.gt(3), function (obj) {
+			return obj % 2;
+		});
+	};
+	
+	it('good param', function () {
+		testFn();
+		testFn(0);
+		testFn(8);
+	});
+	
+	it('bad param', function () {
+		shouldThrow(function () {
+			testFn('');
+		});
+		
+		shouldThrow(function () {
+			testFn(2.5);
+		});
+		
+		shouldThrow(function () {
+			testFn(9);
+		});
+	});
+});
+
 describe('and', function () {
 	var testFn = function (a) {
 		check(a, 'a').and(check.policy.gt(1).lt(3), check.policy.gt(2).lt(4));
@@ -612,6 +775,28 @@ describe('and', function () {
 		});
 	});
 });
+
+describe('not.and', function () {
+	var testFn = function (a) {
+		check(a, 'a').not.and(check.policy.is('number').not.lt(1).not.gt(3), function (obj) {
+			return obj % 2 === 0;
+		});
+	};
+	
+	it('good param', function () {
+		testFn();
+		testFn(0);
+		testFn(4);
+		testFn("");
+	});
+	
+	it('bad param', function () {
+		shouldThrow(function () {
+			testFn(2);
+		});
+	});
+});
+
 
 describe('policy.not', function () {
 	var testFn = function (a) {
@@ -644,52 +829,28 @@ describe('policy.not', function () {
 	});
 });
 
-describe('not.or', function () {
+describe('meet', function () {
 	var testFn = function (a) {
-		check(a, 'a').not.or(check.policy.is('string'), check.policy.is('number').not.lt(1).not.gt(3), function (obj) {
-			return obj % 2;
-		});
+		check(a, 'a').meet(check.policy.gt(1).lt(2));
 	};
 	
 	it('good param', function () {
-		testFn();
-		testFn(0);
-		testFn(4);
+		testFn(1.5);
 	});
 	
 	it('bad param', function () {
+		shouldThrow(function () {
+			testFn();
+		});
+
+		shouldThrow(function () {
+			testFn(2.5);
+		});
+
 		shouldThrow(function () {
 			testFn("");
 		});
-		
-		shouldThrow(function () {
-			testFn(2);
-		});
-		
-		shouldThrow(function () {
-			testFn(9);
-		});
 	});
 });
 
 
-describe('not.and', function () {
-	var testFn = function (a) {
-		check(a, 'a').not.and(check.policy.is('number').not.lt(1).not.gt(3), function (obj) {
-			return obj % 2 === 0;
-		});
-	};
-	
-	it('good param', function () {
-		testFn();
-		testFn(0);
-		testFn(4);
-		testFn("");
-	});
-	
-	it('bad param', function () {
-		shouldThrow(function () {
-			testFn(2);
-		});
-	});
-});
