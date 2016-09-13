@@ -8,13 +8,10 @@
 var is = require('./is');
 var isString = is.isString;
 
-module.exports = {
-	message: message,
-	makeMessage: function(entry, obj, name, args) {
-		return function() {
-			message(entry, obj, name, args);
-		}
-	},
+module.exports = function(entry, obj, name, args) {
+	return function() {
+		message(entry, obj, name, args);
+	}
 };
 
 function toString(obj) {
@@ -26,25 +23,31 @@ function message(entry, obj, name, args) {
 
 	if (entry === 'is') {
 		reason = 'is NOT ' + Array.prototype.join.call(args, ', ');
-	} else if (entry === 'gt') {
+	} else if (entry.indexOf('is') === 0) {
+		reason = 'is NOT a(n) ' + entry.replace(/^is/, '').toLowerCase();
+	} else if (entry === 'instanceOf') {
+		reason = 'is NOT an instance of given constructor';
+	} else if (entry === 'gt' || entry === 'greaterThan') {
 		reason = 'is NOT greater than ' + toString(args[0]);
-	} else if (entry === 'lt') {
+	} else if (entry === 'lt' || entry === 'lessThan') {
+		reason = 'is NOT less than ' + toString(args[0]);
+	} else if (entry === 'egt' || entry === 'equalOrGreaterThan') {
+		reason = 'is NOT greater than ' + toString(args[0]);
+	} else if (entry === 'elt' || entry === 'equalOrLessThan') {
 		reason = 'is NOT less than ' + toString(args[0]);
 	} else if (entry === 'within') {
-		reason = 'is NOT in ranges: ' + Array.prototype.join.call(args, ', ');
+		reason = 'is NOT in range(s): ' + Array.prototype.join.call(args, ', ');
 	} else if (entry === 'match') {
 		reason = 'does NOT match regexp: ' + toString(args[0]);
 	} else if (entry === 'same') {
 		reason = 'is NOT the same object to ' + toString(args[0]);
-	} else if (entry === 'eq') {
+	} else if (entry === 'eq' || entry === 'equal') {
 		reason = 'is NOT equal to ' + toString(args[0]);
-	} else if (entry === 'has') {
+	} else if (entry === 'has' || entry === 'hasOwn') {
 		reason = 'has NO own property: ' + toString(args[0]);
 	} else if (entry === 'got') {
-		reason = 'has NOT got property: ' + toString(args[0]);
-	} else if (entry === 'length') {
-		reason = 'has NO length';
-	} else if (entry == 'and') {
+		reason = 'has NOT property: ' + toString(args[0]);
+	} else if (entry === 'and') {
 		// args[0] 是执行失败的检查序号,args[1] 是具体原因
 		var no = args[0];
 		var detail = args[1] || 'unknown';
@@ -53,10 +56,10 @@ function message(entry, obj, name, args) {
 			detail = detail.path();
 		}
 
-		reason = 'FAILED when executing check[' +
-			no + '] of an "AND" check, detail: {' + detail + '}';
-	} else if (entry == 'or') {
-		var mapArgs = [];
+		reason = 'does NOT pass the [' +
+			no + ']th of an "AND" check, detail: {' + detail + '}';
+	} else if (entry === 'or') {
+		var details = [];
 
 		for (var i = 0; i < args.length; ++i) {
 			var detail = args[i] || 'unknown';
@@ -65,13 +68,15 @@ function message(entry, obj, name, args) {
 				detail = detail.path();
 			}
 
-			mapArgs.push(detail);
+			details.push(detail);
 		}
 
-		reason = 'FAILED when executing an "OR" check, detail: {' + mapArgs.join('}{') + '}';
+		reason = 'does NOT pass an "OR" check, detail: {' + details.join('}{') + '}';
+	} else if (entry === 'meet') {
+		reason = 'does NOT pass the check, detail: {' + args[0] + '}';
 	} else {
-		reason = 'for unknown reason';
+		reason = 'does NOT pass for unknown reason';
 	}
 
-	return '[PARAM-CHECK] Check failure: ' + name + '(' + toString(obj) + ') ' + reason + '.';
+	return '[PARAM-CHECK] Check Failure: ' + name + '(' + toString(obj) + ') ' + reason + '.';
 }
