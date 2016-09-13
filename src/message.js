@@ -10,7 +10,7 @@ var isString = is.isString;
 
 module.exports = function(entry, obj, name, args) {
 	return function() {
-		message(entry, obj, name, args);
+		return message(entry, obj, name, args);
 	}
 };
 
@@ -26,7 +26,8 @@ function message(entry, obj, name, args) {
 	} else if (entry.indexOf('is') === 0) {
 		reason = 'is NOT a(n) ' + entry.replace(/^is/, '').toLowerCase();
 	} else if (entry === 'instanceOf') {
-		reason = 'is NOT an instance of given constructor';
+		ctorName = (args[0] || {}).name || '[unknown]';
+		reason = 'is NOT an instance of given constructor: ' + ctorName;
 	} else if (entry === 'gt' || entry === 'greaterThan') {
 		reason = 'is NOT greater than ' + toString(args[0]);
 	} else if (entry === 'lt' || entry === 'lessThan') {

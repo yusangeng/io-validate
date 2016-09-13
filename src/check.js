@@ -26,7 +26,6 @@ module.exports = {
 	NotChecker: NotChecker,
 };
 
-
 function check(obj, name) {
 	return new Checker(obj, name);
 }
@@ -45,13 +44,14 @@ function throwError(err, async) {
 
 function verify(condition, message, async) {
 	if (!condition) {
-		throwError(new Error(isFunction(message) ? message() : message), async);
+		var msg = isFunction(message) ? message() : message;
+		throwError(new Error(msg), async);
 	}
 }
 
 function verifyInternal(condition, message) {
 	if (!condition) {
-		console.warning('[PARAM-CHECK-INTERNAL] ' + message);
+		console.warn('[PARAM-CHECK-INTERNAL] ' + message);
 	}
 
 	return condition;
@@ -121,7 +121,9 @@ Checker.prototype.instanceOf = function(ctor) {
 	var obj = this.obj_,
 		name = this.name_;
 
-	verify(obj instanceof ctor, message('instanceOf', obj, name, arguments));
+	if (verifyInternal(isFunction(ctor), 'Bad param: ctor is NOT a function')) {
+		verify(obj instanceof ctor, message('instanceOf', obj, name, arguments));
+	}
 
 	return this;
 }
@@ -191,14 +193,14 @@ function getRangeFn(range) {
 	if (fn) return fn;
 
 	if (!verifyInternal(isString(range),
-			'Bad param: arguments[' + i + '] is NOT string')) {
+			'Bad param: range is NOT string')) {
 		return null;
 	}
 
 	var match = rexpRange.exec(range);
 
 	if (!verifyInternal(match && match.length === 5,
-			'Bad range string: ' + range)) {
+			'Bad param: bad range string: ' + range)) {
 		return null;
 	}
 
@@ -321,11 +323,11 @@ Checker.prototype.map = function(fn) {
 		} else if (isString(fn)) {
 			var f = obj[fn];
 			if (verifyInternal(isFunction(f),
-					'Bad param, the obj has NOT got a(n) method called' + fn)) {
+					'Bad param: the obj has NOT got a(n) method called' + fn)) {
 				mapObj = f.apply(obj, Array.prototype.slice.call(arguments, 1));
 			}
 		} else {
-			verifyInternal(false, 'Bad param, fn is illegal');
+			verifyInternal(false, 'Bad param: fn is illegal');
 		}
 	} catch (err) {
 		verify(false, err.message);
@@ -337,9 +339,12 @@ Checker.prototype.map = function(fn) {
 
 function errorMessage(fn) {
 	var args = Array.prototype.slice.call(arguments, 1);
+
 	try {
-		if (!fn.call(args)) {
-			return 'return false value.';
+		if (!fn.apply(this, args)) {
+			var message = fn.name || fn.toString();
+			
+			return message;
 		}
 	} catch (err) {
 		return err.message;
@@ -349,12 +354,22 @@ function errorMessage(fn) {
 Checker.prototype.meet = function(fn) {
 	var obj = this.obj_,
 		name = this.name_;
+	var errorMsg;
 
-	if (verifyInternal(isFunction(fn),
-			'Bad param, fn is NOT a function')) {
-		errorMsg = errorMessage(fn, obj);
-		verify(errorMsg, message('meet', obj, name, [errorMsg]));
+	if (verifyInternal(isFunction(fn) || fn.isPolicy,
+			'Bad param: fn is NOT a function or policy')) {
+		if (fn.isPolicy) {
+			try {
+				fn.exec(this);
+			} catch (e) {
+				errorMsg = fn.path();
+			}
+		} else {
+			errorMsg = errorMessage(fn, obj);
+		}
 	}
+
+	verify(!errorMsg, message('meet', obj, name, [errorMsg]));
 
 	return this;
 };
@@ -378,7 +393,7 @@ Checker.prototype.and = function() {
 			try {
 				fn.exec(this);
 			} catch (e) {
-				errorMsg = message('and', obj, name, [i, e.message]);
+				errorMsg = message('and', obj, name, [i, fn.path()]);
 				break;
 			}
 		} else {
@@ -386,7 +401,7 @@ Checker.prototype.and = function() {
 		}
 	}
 
-	verify(errorMsg, errorMsg)
+	verify(!errorMsg, errorMsg)
 
 	return this;
 };
@@ -406,20 +421,19 @@ Checker.prototype.or = function() {
 			if (errorMsg) {
 				errorDetail.push(errorMsg);
 				errorCount++;
-			} else {
-				errorDetail.push('No error.');
-				break;
+				continue;
 			}
+
+			break;
 		} else if (fn.isPolicy) {
 			try {
 				fn.exec(this);
 			} catch (err) {
-				errorDetail.push(err.message);
+				errorDetail.push(fn.path());
 				errorCount++;
 				continue;
 			}
 
-			errorDetail.push('No error.');
 			break;
 		} else {
 			verifyInternal(false, 'Bad param: argument[' + i + '] is NOT a function or policy');
@@ -457,11 +471,11 @@ for (var methodName in Checker.prototype) {
 				if (err.message.indexOf('[PARAM-CHECK]') === 0) {
 					yes = true;
 				} else {
-					throw e; // 内部错误，非检查失败
+					throw err; // 内部错误，非检查失败
 				}
 			}
 
-			verify(yes, function(entry, obj, name, args) {
+			verify(yes, function() {
 				return message(name, obj, objName, args)()
 					.replace('[PARAM-CHECK]', '[PARAM-CHECK][NOT-CHECK]');
 			});
