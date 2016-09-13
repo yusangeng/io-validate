@@ -8,9 +8,8 @@
 'use strict';
 
 var is = require('./is');
-var makeMessage = require('./makeMessage');
+var message = require('./message');
 var defineProperty = require('./defineProperty');
-var makePolicy = require('./makePolicy');
 var equal = require('deep-equal');
 
 var isFunction = is.isFunction;
@@ -24,97 +23,79 @@ var isRegExp = is.isRegExp;
 module.exports = {
 	check: check,
 	Checker: Checker,
+	NotChecker: NotChecker,
 };
 
-var rexpPosition = /[^/\\:*?"<>|]+:\d+(?:\:\d+)?\)?$/;
-var pauseCallback = false;
 
-var isExternalSourceFile = function(line) {
-	return (line.indexOf('param-check.js') === -1);
+function check(obj, name) {
+	return new Checker(obj, name);
 }
 
-function setIsExternalSourceFileCallback(fn) {
-	isExternalSourceFile = fn;
-}
+function throwError(err, async) {
+	if (async) {
+		setTimeout(function() {
+			throw err;
+		}, 0);
 
-function throwError(err) {
-	if (err.stack &&
-		!pauseCallback &&
-		err.message.indexOf('[PARAM-CHECK]') === 0) {
-		// 找到发生异常的外部代码
-		// 因为位置是给外部使用者看的，所以 pauseCallback 生效时，没有必要分析位置
-		var lines = err.stack.split('\n');
-		var len = lines.length;
-
-		for (var i = 1; i < len; ++i) {
-			var line = lines[i];
-			if (isExternalSourceFile(line)) {
-				var pos = rexpPosition.exec(line);
-
-				if (pos) {
-					pos = ' position: ' + pos[0] + '.';
-					err.message = err.message + pos;
-					break;
-				}
-			}
-		}
+		return;
 	}
 
 	throw err;
 }
 
-function assert(condition, messageFn) {
+function verify(condition, message, async) {
 	if (!condition) {
-		throwError(new Error(messageFn()));
+		throwError(new Error(isFunction(message) ? message() : message), async);
 	}
+}
+
+function verifyInternal(condition, message) {
+	if (!condition) {
+		console.warning('[PARAM-CHECK-INTERNAL] ' + message);
+	}
+
+	return condition;
 }
 
 function Checker(obj, name, owner) {
 	this.obj_ = obj;
 	this.name_ = name || '[unknown object]';
-	this.owner_ = owner;
+	this.owner = owner;
 
 	try {
 		defineProperty(this, 'not', function() {
 			var ret = this.not_ || (this.not_ = new NotChecker(this));
 			return ret;
 		});
-
-		defineProperty(this, 'owner', function() {
-			return this.owner_;
-		});
 	} catch (e) {
 		this.not = new NotChecker(this);
-		this.owner = owner;
 	}
 }
 
 Checker.prototype.is = function() {
+	var obj = this.obj_,
+		name = this.name_;
 	var len = arguments.length;
-	var obj = this.obj_;
 	var yes = false;
-	var types = [];
 
 	for (var i = 0; i < len; ++i) {
 		var key = arguments[i];
 
-		assert(isString(key), '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is NOT string');
-		key = key.toLowerCase();
-		types.push(key)
+		if (verifyInternal(isString(key),
+				'Bad param: arguments[' + i + '] is NOT string')) {
+			key = key.toLowerCase();
 
-		var fn = lowerIs[key];
+			var fn = is[key];
 
-		if (lowerIs.hasOwnProperty(key) && isFunction(fn)) {
-			if (fn(obj)) {
+			if (verifyInternal(is.hasOwnProperty(key) && isFunction(fn),
+					'Bad param: arguments[' + i + '] is NOT a legal type') && fn(obj)) {
 				yes = true;
 				break;
 			}
-		} else {
-			assert(false, '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is bad');
 		}
 	}
 
-	assert(yes, this._makeMessage('is', types));
+	verify(yes, message('is', obj, name, arguments));
 
 	return this;
 };
@@ -128,52 +109,115 @@ for (var entry in is) {
 
 	(function(entry, fn) {
 		Checker.prototype[entry] = function() {
-			var obj = this.obj_;
-			assert(fn(obj), this._makeMessage('is', [entry.replace(/^is/, '')]));
-
+			var obj = this.obj_,
+				name = this.name_;
+			verify(fn(obj), message(entry, obj, name, arguments));
 			return this;
 		}
 	})(entry, fn);
 }
 
+Checker.prototype.instanceOf = function(ctor) {
+	var obj = this.obj_,
+		name = this.name_;
+
+	verify(obj instanceof ctor, message('instanceOf', obj, name, arguments));
+
+	return this;
+}
+
 Checker.prototype.gt = function(n) {
-	assert(isNumber(n), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a number');
-	assert(this.obj_ > n, this._makeMessage('gt', arguments));
+	var obj = this.obj_,
+		name = this.name_;
+
+	if (verifyInternal(isNumber(n), 'Bad param: n is NOT a number')) {
+		verify(isNumber(obj), message('isNumber', obj, name, arguments));
+		verify(obj > n, message('gt', obj, name, arguments));
+	}
 
 	return this;
 };
+
+Checker.prototype.greaterThan = Checker.prototype.gt;
+
+Checker.prototype.egt = function(n) {
+	var obj = this.obj_,
+		name = this.name_;
+
+	if (verifyInternal(isNumber(n), 'Bad param: n is NOT a number')) {
+		verify(isNumber(obj), message('isNumber', obj, name, arguments));
+		verify(obj >= n, message('gt', obj, name, arguments));
+	}
+
+	return this;
+};
+
+Checker.prototype.equalOrGreaterThan = Checker.prototype.egt;
 
 Checker.prototype.lt = function(n) {
-	assert(isNumber(n), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a number');
-	assert(this.obj_ < n, this._makeMessage('lt', arguments));
+	var obj = this.obj_,
+		name = this.name_;
+
+	if (verifyInternal(isNumber(n), 'Bad param: n is NOT a number')) {
+		verify(isNumber(obj), message('isNumber', obj, name, arguments));
+		verify(obj < n, message('lt', obj, name, arguments));
+	}
 
 	return this;
 };
 
-var rangeFns = {};
+Checker.prototype.lessThan = Checker.prototype.lt;
+
+Checker.prototype.elt = function(n) {
+	var obj = this.obj_,
+		name = this.name_;
+
+	if (verifyInternal(isNumber(n), 'Bad param: n is NOT a number')) {
+		verify(isNumber(obj), message('isNumber', obj, name, arguments));
+		verify(obj <= n, message('lt', obj, name, arguments));
+	}
+
+	return this;
+};
+
+Checker.prototype.qeualOrLessThan = Checker.prototype.elt;
+
+var rangeFnCache = {};
 var rexpRange = /^([(\[])([-+]?[\d.]+),\s*([-+]?[\d.]+)([\])])$/;
 
 function getRangeFn(range) {
-	var fn = rangeFns[range];
+	var fn = rangeFnCache[range];
 
 	if (fn) return fn;
 
+	if (!verifyInternal(isString(range),
+			'Bad param: arguments[' + i + '] is NOT string')) {
+		return null;
+	}
+
 	var match = rexpRange.exec(range);
 
-	assert(match && match.length === 5, '[PARAM-CHECK-INTERNAL] Bad range string: ' + range);
+	if (!verifyInternal(match && match.length === 5,
+			'Bad range string: ' + range)) {
+		return null;
+	}
 
-	var op1 = (match[1] === '[') ? '>=' : '>';
-	var op2 = (match[2] === ']') ? '<=' : '<';
-	var lowerBound = parseFloat(match[2]);
-	var higherBound = parseFloat(match[3]);
+	try {
+		var op1 = (match[1] === '[') ? '>=' : '>';
+		var op2 = (match[2] === ']') ? '<=' : '<';
+		var lowerBound = parseFloat(match[2]);
+		var higherBound = parseFloat(match[3]);
 
-	var fnSource = ('return (n $op1 $lowerBound) && (n $op2 $higherBound);')
-		.replace('$op1', op1)
-		.replace('$lowerBound', lowerBound)
-		.replace('$op2', op2)
-		.replace('$higherBound', higherBound);
+		var fnSource = ('return (n $op1 $lowerBound) && (n $op2 $higherBound);')
+			.replace('$op1', op1)
+			.replace('$lowerBound', lowerBound)
+			.replace('$op2', op2)
+			.replace('$higherBound', higherBound);
 
-	fn = rangeFns[range] = new Function(['n'], fnSource);
+		fn = rangeFnCache[range] = new Function(['n'], fnSource);
+	} catch (err) {
+		return null;
+	}
 
 	return fn;
 }
@@ -185,166 +229,187 @@ Checker.prototype.within = function() {
 		return this;
 	}
 
-	var obj = this.obj_;
+	var obj = this.obj_,
+		name = this.name_;
 	var yes = false;
 
 	for (var i = 0; i < len; ++i) {
 		var range = arguments[i];
-		assert(isString(range), '[PARAM-CHECK-INTERNAL] Bad param: arguments[' + i + '] is NOT string');
 		var fn = getRangeFn(range);
 
-		if (fn(obj)) {
+		if (fn && fn(obj)) {
 			yes = true;
 			break;
 		}
 	}
 
-	assert(yes, this._makeMessage('within', arguments));
+	verify(yes, message('within', obj, name, arguments));
 
 	return this;
 };
 
 Checker.prototype.match = function(rexp) {
-	var obj = this.obj_;
+	var obj = this.obj_,
+		name = this.name_;
 
-	assert(isRegExp(rexp), '[PARAM-CHECK-INTERNAL] Bad param: n is NOT a regexp');
-	assert(isString(obj) && rexp.test(obj), this._makeMessage('match', arguments));
+	if (verifyInternal(isRegExp(rexp),
+			'Bad param: n is NOT a regexp')) {
+		verify(isString(obj), message('isString', obj, name, arguments))
+		verify(rexp.test(obj), message('match', obj, name, arguments));
+	}
 
 	return this;
-}
+};
 
 Checker.prototype.same = function(other) {
-	assert((this.obj_ === other), this._makeMessage('same', arguments));
+	var obj = this.obj_,
+		name = this.name_;
+
+	verify((obj === other), message('same', obj, name, arguments));
+
 	return this;
 };
 
 Checker.prototype.eq = function(other) {
-	assert(equal(this.obj_, other), this._makeMessage('eq', arguments));
+	var obj = this.obj_,
+		name = this.name_;
+
+	verify(equal(obj, other), message('eq', obj, name, arguments));
+
 	return this;
 };
 
+Checker.prototype.equal = Checker.prototype.eq;
+
 Checker.prototype.has = function(key) {
-	var obj = this.obj_;
+	var obj = this.obj_,
+		name = this.name_;
 
-	assert(isExist(obj) &&
-		obj.hasOwnProperty &&
-		obj.hasOwnProperty(key), this._makeMessage('has', arguments));
+	verify(isExist(obj), message('isExist', obj, name, arguments))
+	verify(obj.hasOwnProperty && obj.hasOwnProperty(key),
+		message('has', obj, name, arguments));
 
-	return new Checker(obj[key], this.name_ + '.' + key, this);
+	return new Checker(obj[key], name + '.' + key, this);
 }
+
+Checker.prototype.hasOwn = Checker.prototype.has;
 
 Checker.prototype.got = function(key) {
-	var obj = this.obj_;
+	var obj = this.obj_,
+		name = this.name_;
 
-	assert(isExist(obj), this._makeMessage('is', ['exist']));
-	assert(!isUndefined(obj[key]), this._makeMessage('got', arguments));
+	verify(isExist(obj), message('isExist', obj, name, arguments));
+	verify(!isUndefined(obj[key]), message('got', obj, name, arguments));
 
-	return new Checker(obj[key], this.name_ + '.' + key, this);
-}
+	return new Checker(obj[key], name + '.' + key, this);
+};
 
 Checker.prototype.length = function() {
-	var obj = this.obj_;
-
-	assert(!isUndefined(obj) &&
-		!isNull(obj) &&
-		isNumber(obj.length), this._makeMessage('length', arguments));
-
-	return new Checker(obj.length, this.name_ + '.length', this);
-}
+	return this.got('length');
+};
 
 Checker.prototype.map = function(fn) {
-	var obj = this.obj_;
+	var obj = this.obj_,
+		name = this.name_;
 	var mapObj;
+
+	verify(isExist(obj), message('isExist', obj, name, arguments));
 
 	try {
 		if (isFunction(fn)) {
 			mapObj = fn(obj);
 		} else if (isString(fn)) {
-			assert(!isUndefined(obj) && !isNull(obj));
-			var fn = obj[fn];
-			assert(isFunction(fn));
-			var args = Array.prototype.slice.call(arguments, 1);
-
-			mapObj = fn.apply(obj, args);
+			var f = obj[fn];
+			if (verifyInternal(isFunction(f),
+					'Bad param, the obj has NOT got a(n) method called' + fn)) {
+				mapObj = f.apply(obj, Array.prototype.slice.call(arguments, 1));
+			}
 		} else {
-			throw '';
+			verifyInternal(false, 'Bad param, fn is illegal');
 		}
-	} catch (e) {
-		var msg = '[PARAM-CHECK-INTERNAL] Map failed: ' + fn.toString();
-		throwError(new Error(msg));
+	} catch (err) {
+		verify(false, err.message);
 	}
 
-	var str = isString(fn) ? '=>' + fn : '=>[anonymous function]';
-	return new Checker(mapObj, this.name_ + str, this);
+	var str = name + '=>' + (isString(fn) ? fn : '[anonymous function]');
+	return new Checker(mapObj, str, this);
+};
+
+function errorMessage(fn) {
+	var args = Array.prototype.slice.call(arguments, 1);
+	try {
+		if (!fn.call(args)) {
+			return 'return false value.';
+		}
+	} catch (err) {
+		return err.message;
+	}
 }
 
-Checker.prototype.meet = Checker.prototype.map;
+Checker.prototype.meet = function(fn) {
+	var obj = this.obj_,
+		name = this.name_;
+
+	if (verifyInternal(isFunction(fn),
+			'Bad param, fn is NOT a function')) {
+		errorMsg = errorMessage(fn, obj);
+		verify(errorMsg, message('meet', obj, name, [errorMsg]));
+	}
+
+	return this;
+};
 
 Checker.prototype.and = function() {
-	var obj = this.obj_;
-	var errorMsg;
+	var obj = this.obj_,
+		name = this.name_;
 	var len = arguments.length;
+	var errorMsg;
 
 	for (var i = 0; i < len; ++i) {
 		var fn = arguments[i];
 
 		if (isFunction(fn)) {
-			try {
-				var ret = fn(this.obj_);
-			} catch (err) {
-				errorMsg = err.message;
-				ret = false;
-			}
-
-			if (!ret) {
-				errorMsg = this._makeMessage('and', [i, errorMsg]);
+			errorMsg = errorMessage(fn, obj);
+			if (errorMsg) {
+				errorMsg = message('and', obj, name, [i, errorMsg]);
 				break;
 			}
 		} else if (fn.isPolicy) {
 			try {
 				fn.exec(this);
 			} catch (e) {
-				errorMsg = this._makeMessage('and', [i, e.message]);
+				errorMsg = message('and', obj, name, [i, e.message]);
 				break;
 			}
 		} else {
-			errorMsg = '[PARAM-CHECK-INTERNAL] Bad param: argument[' + i + '] is NOT a function or policy';
-			break;
+			verifyInternal(false, 'Bad param: argument[' + i + '] is NOT a function or policy');
 		}
 	}
 
-	if (errorMsg) {
-		throwError(new Error(errorMsg));
-	}
+	verify(errorMsg, errorMsg)
 
 	return this;
-}
+};
 
 Checker.prototype.or = function() {
-	var obj = this.obj_;
-	var errorMsg;
-	var errorDetail = [];
+	var obj = this.obj_,
+		name = this.name_;
 	var len = arguments.length;
+	var errorDetail = [];
 	var errorCount = 0;
 
 	for (var i = 0; i < len; ++i) {
 		var fn = arguments[i];
 
 		if (isFunction(fn)) {
-			try {
-				var ret = fn(this.obj_);
-
-				if (ret) {
-					break;
-				}
-			} catch (err) {
-				errorDetail.push(err.message);
+			var errorMsg = errorMessage(fn, obj);
+			if (errorMsg) {
+				errorDetail.push(errorMsg);
 				errorCount++;
-				continue;
+			} else {
+				errorDetail.push('No error.');
+				break;
 			}
-
-			errorDetail.push('unknown');
-			errorCount++;
 		} else if (fn.isPolicy) {
 			try {
 				fn.exec(this);
@@ -354,68 +419,54 @@ Checker.prototype.or = function() {
 				continue;
 			}
 
+			errorDetail.push('No error.');
 			break;
 		} else {
-			errorMsg = '[PARAM-CHECK-INTERNAL] Bad param: argument[' + i + '] is NOT a function or policy';
-			break;
+			verifyInternal(false, 'Bad param: argument[' + i + '] is NOT a function or policy');
 		}
 	}
 
-	if (errorMsg) {
-		// 优先抛出内部错误
-		throwError(new Error(errorMsg));
-	}
-
-	if (errorCount === len) {
-		throwError(new Error(this._makeMessage('or', errorDetail)));
-	}
+	verify(errorCount < len, message('or', obj, name, errorDetail));
 
 	return this;
-}
+};
 
 function NotChecker(checker) {
 	this.checker_ = checker;
 }
 
-var arr = ['is', 'gt', 'lt', 'within', 'match', 'same', 'eq', 'has', 'length', 'and', 'or'];
+for (var methodName in Checker.prototype) {
+	var method = Checker.prototype[methodName];
 
-for (var i = 0; i < arr.length; ++i) {
-	var currName = arr[i];
+	if (!Checker.prototype.hasOwnProperty(methodName) ||
+		!isFunction(method)) {
+		continue;
+	}
 
-	NotChecker.prototype[currName] = (function(name) {
+	NotChecker.prototype[methodName] = (function(name) {
 		return function() {
-			var args = Array.prototype.slice.call(arguments, 0);
 			var that = this.checker_;
+			var obj = that.obj_;
+			var objName = that.name_;
+			var args = Array.prototype.slice.call(arguments, 0);
 			var yes = false;
-			var pauseCallbackBak = pauseCallback;
-
-			pauseCallback = true;
 
 			try {
-				var ret = that[name].apply(that, args);
-			} catch (e) {
-				if (e.message.indexOf('[PARAM-CHECK]') === 0) {
+				that[name].apply(that, args);
+			} catch (err) {
+				if (err.message.indexOf('[PARAM-CHECK]') === 0) {
 					yes = true;
 				} else {
-					// 内部错误
-					throw e;
+					throw e; // 内部错误，非检查失败
 				}
-			} finally {
-				pauseCallback = pauseCallbackBak;
 			}
 
-			assert(yes, that._makeMessage(name, args)
-				.replace('[PARAM-CHECK]', '[PARAM-CHECK][NOT-CHECK]')
-				.replace(/NOT? /, '')
-				.replace(/FAILED /, 'SUCCESS '));
+			verify(yes, function(entry, obj, name, args) {
+				return message(name, obj, objName, args)()
+					.replace('[PARAM-CHECK]', '[PARAM-CHECK][NOT-CHECK]');
+			});
 
 			return that;
 		}
-	})(currName);
+	})(methodName);
 }
-
-function check(obj, name) {
-	return new Checker(obj, name);
-}
-
-check.policy = makePolicy(Checker.prototype, ['not', 'owner']);
