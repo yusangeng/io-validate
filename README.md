@@ -9,7 +9,7 @@ npm install param-check
 
 ## Usage
 
-### Loading
+### HTML
 
 ```
 <html>
@@ -18,7 +18,9 @@ npm install param-check
 <script>
 	var foobar = 2;
 	
-	// check is the global variable exposed by param-check.js
+	// paramCheck is the global variable exposed by param-check.js
+	var check = window.paramCheck;
+
 	check(foobar).gt(1).lt(3);
 </script>
 </body>
@@ -38,13 +40,10 @@ check(foobar).gt(1).lt(3);
 
 ```javascript
 
-check.setCheckFailureCallback(function (err) {
-	console.log(err.message);
-	// if return false, err would be throw
-	return true;
-});
-
 var something = {};
+
+function SomeFn () {
+}
 
 function foobar(a) {
 	// a should be a string
@@ -53,8 +52,14 @@ function foobar(a) {
 	// a should be a string or number
 	check(a, 'a').is('string', 'number');
 
+	// a should be an instance of SomeFn
+	check(a, 'a').instanceOf(SomeFn);
+
 	// a should be > 1, and < 3
 	check(a, 'a').gt(1).lt(3);
+	
+	// a should be >= 1, and <= 3
+	check(a, 'a').egt(1).elt(3);
 
 	// a should be >= 1, and <= 3
 	check(a, 'a').not.lt(1).not.gt(3);
@@ -71,8 +76,11 @@ function foobar(a) {
 	// a should be deep-equal to something;
 	check(a, 'a').eq(something);
 	
-	// a should have a property named 'count'
+	// a should have a owned property named 'count'
 	check(a, 'a').has('count');
+	
+	// a should have a property named 'count'
+	check(a, 'a').got('count');
 
 	// a should have a property named 'count', and a['count']
 	// should be > 1, and < 3
@@ -96,11 +104,24 @@ function foobar(a) {
 	check(a, 'a').and(check.policy.is('array'), myCheck);
 
 	// a should NOT be an even number in range [1,3]
-	check(param, 'param').not.and(
+	check(a, 'a').not.and(
 		check.policy.is('number').not.lt(1).not.gt(3),
 		function (obj) {
 			return obj % 2 === 0;
 		});
+
+	// a should be a number or a.length > 4
+	check(a, 'a').or(check.policy.is('number'), myCheck);
+
+	// a should be an odd number or NOT in range [1,3]
+	check(a, 'a').not.or(
+		check.policy.is('number').not.lt(1).not.gt(3),
+		function (obj) {
+			return obj % 2 === 0;
+		});
+
+	// a should be a number
+	check(a, 'a').meet(check.policy.is('number'));
 }
 ```
 
