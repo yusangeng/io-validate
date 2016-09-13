@@ -8,7 +8,7 @@
 'use strict';
 
 var check = require('./src/check');
-var makePolicy = require('./policy');
+var makePolicy = require('./src/policy');
 
 var exportModule = check.check;
 
