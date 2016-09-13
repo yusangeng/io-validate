@@ -7,11 +7,13 @@
 
 'use strict';
 
-var checkEntries = require('./src/check');
-var check = checkEntries.check;
+var check = require('./src/check');
+var makePolicy = require('./policy');
 
-check.Checker = checkEntries.Checker;
-check.setCheckFailureCallback = checkEntries.setCheckFailureCallback;
-check.setIsExternalSourceFileCallback = checkEntries.setIsExternalSourceFileCallback;
+var exportModule = check.check;
 
-module.exports = check;
+exportModule.Checker = check.Checker;
+exportModule.NotChecker = check.NotChecker;
+exportModule.policy = makePolicy(check.Checker.prototype, ['not', 'owner']);
+
+module.exports = exportModule;
