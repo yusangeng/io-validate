@@ -4,7 +4,7 @@ A js library for checking parameters.
 ## Install
 
 ```
-npm install param-check
+npm install param-check --save
 ```
 
 ## Usage
@@ -18,8 +18,8 @@ npm install param-check
 <script>
 	var foobar = 2;
 	
-	// paramCheck is the global variable exposed by param-check.js
-	var check = window.paramCheck;
+	// window['param-check'] is the global variable exposed by param-check.js
+	var check = window['param-check'];
 
 	check(foobar).gt(1).lt(3);
 </script>
@@ -32,8 +32,8 @@ npm install param-check
 ```
 var check = require('param-check');
 
-var foobar = 2;
-check(foobar).gt(1).lt(3);
+var foo = 2;
+check(foo, 'foo').gt(1).lt(3);
 ```
 
 ## Example
