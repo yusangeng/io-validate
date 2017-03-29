@@ -1,4 +1,7 @@
 # param-check
+
+[![Build Status](https://travis-ci.org/yusangeng/param-check.svg?branch=dev)](https://travis-ci.org/yusangeng/param-check) [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+
 A js library for checking parameters.
 
 ## Install
