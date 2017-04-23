@@ -1,6 +1,6 @@
 # param-check
 
-[![Build Status](https://travis-ci.org/yusangeng/param-check.svg?branch=master)](https://travis-ci.org/yusangeng/param-check) [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![Build Status](https://travis-ci.org/yusangeng/param-check.svg?branch=dev)](https://travis-ci.org/yusangeng/param-check) [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 [![Npm Info](https://nodei.co/npm/param-check.png?compact=true)](https://www.npmjs.com/package/param-check)
 
