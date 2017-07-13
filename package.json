@@ -1,6 +1,6 @@
 {
   "name": "param-check",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "A js library for runtime parameter checking.",
   "repository": {
     "url": "https://github.com/yusangeng/param-check.git"
@@ -25,7 +25,7 @@
     "webpack": "^2.3.2"
   },
   "dependencies": {
-    "async-cast": "^1.0.1",
+    "async-cast": "^1.0.2",
     "lodash": "^4.17.4"
   }
 }
