@@ -17,14 +17,7 @@ var config = {
   devtool: 'cheap-module-inline-source-map',
 
   module: {
-    rules: [
-      {
-        test: /\.js$/,
-        use: [
-          'babel-loader'
-        ]
-      }
-    ]
+    rules: []
   }
 }
 

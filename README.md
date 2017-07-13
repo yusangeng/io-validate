@@ -51,7 +51,7 @@ function SomeFn () {
 }
 
 function foobar(a) {
-	// a should be a string
+	// a should be a string(based on lodash)
 	check(a, 'a').isString();
 
 	// a should be a string or number
