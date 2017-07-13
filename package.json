@@ -1,6 +1,6 @@
 {
   "name": "param-check",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "A js library for runtime parameter checking.",
   "repository": {
     "url": "https://github.com/yusangeng/param-check.git"
