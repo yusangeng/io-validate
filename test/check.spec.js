@@ -1,4 +1,3 @@
-require('babel-polyfill')
 var path = require('path')
 
 var shouldThrow = require(path.resolve(__dirname, './shouldThrow'))

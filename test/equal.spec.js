@@ -1,5 +1,3 @@
-require('babel-polyfill')
-
 var path = require('path')
 var chai = require('chai')
 
