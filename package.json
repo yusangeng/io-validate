@@ -1,6 +1,6 @@
 {
   "name": "param-check",
-  "version": "1.1.5",
+  "version": "1.1.7",
   "description": "A js library for runtime parameter checking.",
   "repository": {
     "url": "https://github.com/yusangeng/param-check.git"
@@ -10,7 +10,8 @@
     "test": "node_modules/.bin/mocha",
     "build-debug": "node_modules/.bin/webpack --color --config ./webpack/debug.js",
     "build-release": "node_modules/.bin/webpack --color --config ./webpack/release.js",
-    "build": "npm test && npm run build-debug && npm run build-release"
+    "build": "npm test && npm run build-debug && npm run build-release",
+    "prepublish": "npm run test"
   },
   "author": {
     "name": "Y3G",
@@ -25,7 +26,6 @@
     "webpack": "^2.3.2"
   },
   "dependencies": {
-    "async-cast": "^1.0.2",
     "lodash": "^4.17.4"
   }
 }
