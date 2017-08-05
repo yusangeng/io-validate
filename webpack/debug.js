@@ -10,7 +10,7 @@ var config = {
     library: packageInfo.name,
     libraryTarget: 'umd',
     path: path.resolve(__dirname, '../build'),
-    filename: packageInfo.name + '.bundle.js',
+    filename: packageInfo.name + '.js',
     umdNamedDefine: true
   },
 
