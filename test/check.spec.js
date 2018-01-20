@@ -274,13 +274,16 @@ describe('is', function () {
 describe('instanceOf', function () {
   function F () {}
   function G () {}
+  function H () {}
 
   it('good param', function () {
     var f = new F()
     var g = new G()
 
     check(f, 'f').instanceOf(F)
+    check(f, 'f').instanceOf(F, G)
     check(g, 'g').instanceOf(G)
+    check(g, 'g').instanceOf(G, F)
   })
 
   it('bad param', function () {
@@ -305,6 +308,10 @@ describe('instanceOf', function () {
 
     shouldThrow(function () {
       check(g, 'g').instanceOf(F)
+    })
+
+    shouldThrow(function () {
+      check(g, 'g').instanceOf(F, H)
     })
   })
 })
@@ -867,3 +874,26 @@ describe('meet', function () {
   })
 })
 
+describe('among', function () {
+  var testFn = function (a) {
+    check(a, 'a').among(1, 2, 3, 4)
+  }
+
+  it('good param', function () {
+    testFn(1)
+  })
+
+  it('bad param', function () {
+    shouldThrow(function () {
+      testFn(6)
+    })
+
+    shouldThrow(function () {
+      testFn(2.5)
+    })
+
+    shouldThrow(function () {
+      testFn()
+    })
+  })
+})
