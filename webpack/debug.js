@@ -1,4 +1,5 @@
 // var webpack = require('webpack')
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 var fs = require('fs')
 var path = require('path')
 
@@ -18,7 +19,15 @@ var config = {
 
   module: {
     rules: []
-  }
+  },
+
+  plugins: [
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      reportFilename: 'bundle-info.html',
+      logLevel: 'info'
+    })
+  ]
 }
 
 module.exports = config

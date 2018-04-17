@@ -1,5 +1,6 @@
 // var webpack = require('webpack')
 var UglifyJSPlugin = require('uglifyjs-webpack-plugin')
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 var fs = require('fs')
 var path = require('path')
 
@@ -27,6 +28,12 @@ var config = {
         except: ['$super', '$', 'exports', 'require']
       },
       sourceMap: true
+    }),
+
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      reportFilename: 'bundle-info.min.html',
+      logLevel: 'info'
     })
   ]
 }
