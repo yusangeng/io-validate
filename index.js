@@ -24,6 +24,7 @@ Checker.registerCheck(require('./lib/checks/map'))
 Checker.registerCheck(require('./lib/checks/match'))
 Checker.registerCheck(require('./lib/checks/meet'))
 Checker.registerCheck(require('./lib/checks/or'))
+Checker.registerCheck(require('./lib/checks/patterns'))
 Checker.registerCheck(require('./lib/checks/same'))
 Checker.registerCheck(require('./lib/checks/within'))
 
