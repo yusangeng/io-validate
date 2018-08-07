@@ -28,7 +28,7 @@ function fn (arg1, arg2) {
 ### Import of specific check
 
 ``` js
-import check from 'param-check/lib/check'
+import check from 'param-check/naked'
 import isStringCheck from 'param-check/lib/checks/isString'
 
 check.registerCheck(isStringCheck)
