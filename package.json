@@ -1,7 +1,7 @@
 {
-  "name": "param-check",
+  "name": "validate-io",
   "version": "2.1.3",
-  "description": "A js library for runtime parameter checking.",
+  "description": "Runtime data validator.",
   "repository": {
     "url": "https://github.com/yusangeng/param-check.git"
   },
@@ -17,6 +17,9 @@
     "name": "Y3G",
     "email": "yusangeng@outlook.com"
   },
+  "keywords": [
+    "validate", "validator", "validation"
+  ],
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.5.0",
