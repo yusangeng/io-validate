@@ -1,5 +1,5 @@
 /**
- * 导出入口(不注册任何check)
+ * 导出入口(不注册任何validator)
  * @author Y3G
  */
 

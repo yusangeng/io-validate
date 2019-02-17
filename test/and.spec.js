@@ -53,7 +53,7 @@ describe('#and', _ => {
 
   it('1 good plan', done => {
     // console.log(check.plan)
-    const f1 = check.plan.gt(0)
+    const f1 = check.plan.gt(0).lt(2)
 
     check(1, 'a').and(f1)
 
