@@ -1,6 +1,6 @@
-# validate-io
+# io-validate
 
-[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) [![Build Status](https://travis-ci.org/yusangeng/param-check.svg?branch=master)](https://travis-ci.org/yusangeng/param-check) [![Coverage Status](https://coveralls.io/repos/github/yusangeng/param-check/badge.svg?branch=master)](https://coveralls.io/github/yusangeng/param-check?branch=master) [![Npm Package Info](https://badge.fury.io/js/validate-io.svg)](https://www.npmjs.com/package/validate-io) [![Downloads](https://img.shields.io/npm/dw/validate-io.svg?style=flat)](https://www.npmjs.com/package/validate-io)
+[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) [![Build Status](https://travis-ci.org/yusangeng/param-check.svg?branch=master)](https://travis-ci.org/yusangeng/param-check) [![Coverage Status](https://coveralls.io/repos/github/yusangeng/param-check/badge.svg?branch=master)](https://coveralls.io/github/yusangeng/param-check?branch=master) [![Npm Package Info](https://badge.fury.io/js/io-validate.svg)](https://www.npmjs.com/package/io-validate) [![Downloads](https://img.shields.io/npm/dw/io-validate.svg?style=flat)](https://www.npmjs.com/package/io-validate)
 
 Runtime data validator.
 
@@ -10,7 +10,7 @@ Runtime data validator.
 ## Install
 
 ```
-npm install validate-io --save
+npm install io-validate --save
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ npm install validate-io --save
 ### Basic usage
 
 ``` js
-import v from 'validate-io'
+import v from 'io-validate'
 
 function fn (arg1, arg2) {
 	v(arg1).isString()
@@ -31,7 +31,7 @@ function fn (arg1, arg2) {
 ### `not` operator
 
 ``` js
-import v from 'validate-io'
+import v from 'io-validate'
 
 function fn (arg) {
 	v(arg).not.isString()
@@ -40,10 +40,10 @@ function fn (arg) {
 
 ### Chain call
 
-All validators of validate-io support chain calls. A chain call means an "and" expression.
+All validators of io-validate support chain calls. A chain call means an "and" expression.
 
 ``` js
-import v from 'validate-io'
+import v from 'io-validate'
 
 function fn (arg) {
 	v(arg).gt(1).lt(2) // arg > 1 && arg < 2
@@ -55,8 +55,8 @@ function fn (arg) {
 If you want smaller dependence size, just import specific validators.
 
 ``` js
-import v from 'validate-io/naked'
-import isString from 'validate-io/lib/validators/isString'
+import v from 'io-validate/naked'
+import isString from 'io-validate/lib/validators/isString'
 
 v.register(isString)
 
@@ -68,7 +68,7 @@ function fn (arg) {
 ### Custom validator
 
 ``` js
-import v from 'validate-io'
+import v from 'io-validate'
 import isNumber from 'lodash/isNumber'
 
 function isEven (target, name) {
@@ -85,7 +85,7 @@ function fn (arg) {
 ### Custom chain
 
 ``` js
-import v from 'validate-io'
+import v from 'io-validate'
 
 function isEven (target, name) {
   return !(target % 2)
@@ -114,7 +114,7 @@ __plan__ is used to generate combinable validators.
 By contrast, `v('').isString()` executes the validator `isString` immediatly, `v.plan.isString()` doesn't execute any validator, just return a combinable `isString` validator.
 
 ``` js
-import v from 'validate-io'
+import v from 'io-validate'
 
 v('').isString()
 
