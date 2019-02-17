@@ -127,7 +127,7 @@ module.exports = _v
 
 function _v (expr, message) {
   if (!expr) {
-    console.error('[VALIDATE-IO-INTERNAL] ' + message)
+    console.error('[IO-VALIDATE-INTERNAL] ' + message)
   }
 
   return !!expr
@@ -1033,7 +1033,7 @@ var isFunction = __webpack_require__(3)
 
 module.exports = verify
 
-var prefix = '[VALIDATE-IO] Error: '
+var prefix = '[IO-VALIDATE] Error: '
 
 function verify (expr, message) {
   if (!expr) {
@@ -1978,7 +1978,7 @@ var isArray = __webpack_require__(9)
 var isFunction = __webpack_require__(3)
 var Checker = __webpack_require__(13)
 
-var prefix = '[VALIDATE-IO] Error: '
+var prefix = '[IO-VALIDATE] Error: '
 
 module.exports = {
   isArrayOf: isArrayOf
@@ -2553,9 +2553,9 @@ NotChecker.register = function (checks) {
         var realMsg = null
 
         if (errMsg) {
-          realMsg = errMsg.replace('[VALIDATE-IO]', '[VALIDATE-IO][NOT]')
+          realMsg = errMsg.replace('[IO-VALIDATE]', '[IO-VALIDATE][NOT]')
         } else {
-          realMsg = '[VALIDATE-IO][NOT] ' + checkName + ' check error, target: ' + printString(this.checker_.target_)
+          realMsg = '[IO-VALIDATE][NOT] ' + checkName + ' check error, target: ' + printString(this.checker_.target_)
         }
 
         verify(errMsg, realMsg)

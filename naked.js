@@ -3,6 +3,6 @@
  * @author Y3G
  */
 
-var check = require('./lib/check')
+var validate = require('./lib/validate')
 
-module.exports = check
+module.exports = validate
