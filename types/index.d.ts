@@ -65,7 +65,7 @@ export interface HasValidators<T> {
 export interface Plan extends HasValidators<Plan> {
 }
 
-export interface Validator extends HasValidators<Plan> {
+export interface Validator extends HasValidators<Validator> {
 }
 
 export default function validate (target: any, name?: string) : Validator
