@@ -9,8 +9,7 @@ declare module 'oi-validate' {
     owner: T
     _: T
   
-    among: FuncALl<any, T>
-    and: FuncALl<any, T>
+    among: FuncAll<any, T>
     equal: Func1<any, T>
     eq: Func1<any, T>
     equalOrGreaterThan: Func1<number, T>
@@ -65,12 +64,9 @@ declare module 'oi-validate' {
   }
 
   export interface Plan extends HasValidators<Plan> {
-    [x: string]: (...args: any[]) => Plan
   }
 
-  interface Validator extends HasValidators<Plan> {
-    static plan: Plan
-    [x: string]: (...args: any[]) => Validator
+  export interface Validator extends HasValidators<Plan> {
   }
 
   export default function validate (target: any, name?: string) : Validator
