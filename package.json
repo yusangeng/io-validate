@@ -12,7 +12,7 @@
     "build-debug": "node_modules/.bin/webpack --color --config ./webpack/debug.js",
     "build-release": "node_modules/.bin/webpack --color --config ./webpack/release.js",
     "build": "npm test && npm run build-debug && npm run build-release",
-    "prepublish": "npm run test"
+    "prepublishOnly": "npm run test"
   },
   "author": {
     "name": "Y3G",
