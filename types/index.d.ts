@@ -57,6 +57,9 @@ export interface HasValidators<T> {
   length: FuncVoid<T>
   map: Func1<any, T>
   match: Func1<RegExp, T>
+  matchEmail: FuncVoid<T>
+  matchURL: FuncVoid<T>
+  matchIP: FuncVoid<T>
   and: FuncAll<any, T>
   or: FuncAll<any, T>
   meet: Func1<any, T>
