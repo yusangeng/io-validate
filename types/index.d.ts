@@ -71,4 +71,11 @@ export interface Plan extends HasValidators<Plan> {
 export interface Validator extends HasValidators<Validator> {
 }
 
-export default function validate (target: any, name?: string) : Validator
+export type FValidate = {
+   (target: any, name?: string): Validator
+   plan: Plan
+}
+
+export const validate: FValidate
+
+export default validate
