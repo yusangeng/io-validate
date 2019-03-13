@@ -1,6 +1,6 @@
 {
   "name": "io-validate",
-  "version": "2.1.11",
+  "version": "2.1.12",
   "description": "Runtime data validators.",
   "repository": {
     "url": "https://github.com/yusangeng/param-check.git"
