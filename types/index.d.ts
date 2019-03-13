@@ -53,6 +53,8 @@ export interface HasValidators<T> {
   isWeakMap: FuncVoid<T>
   isWeakSet: FuncVoid<T>
   isExist: FuncVoid<T>
+  isInteger: FuncVoid<T>
+  isSafeInteger: FuncVoid<T>
   isArrayOf: Func1<any, T>
   length: FuncVoid<T>
   map: Func1<any, T>
