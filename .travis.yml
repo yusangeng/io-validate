@@ -6,7 +6,7 @@ node_js:
 before_script:
   - npm install
 
-script: npm run build
+script: npm run ci
 
 notifications:
   email: yusangeng@outlook.com

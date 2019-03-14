@@ -1,7 +1,7 @@
 {
   "name": "io-validate",
   "version": "2.1.12",
-  "description": "Runtime data validators.",
+  "description": "Runtime data validator.",
   "repository": {
     "url": "https://github.com/yusangeng/param-check.git"
   },
@@ -11,19 +11,23 @@
     "test": "./node_modules/.bin/babel-node node_modules/.bin/isparta cover node_modules/.bin/_mocha",
     "build-debug": "node_modules/.bin/webpack --color --config ./webpack/debug.js",
     "build-release": "node_modules/.bin/webpack --color --config ./webpack/release.js",
-    "build": "npm test && npm run build-debug && npm run build-release",
-    "prepublishOnly": "npm run test"
+    "build": "npm run build-debug && npm run build-release",
+    "prepublishOnly": "npm run test",
+    "ci": "npm run test && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "author": {
     "name": "Y3G",
     "email": "yusangeng@outlook.com"
   },
   "keywords": [
-    "validate", "validator", "validation"
+    "validate",
+    "validator",
+    "validation"
   ],
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.5.0",
+    "coveralls": "^3.0.2",
     "mocha": "^3.2.0",
     "uglify-js": "^2.8.16",
     "uglifyjs-webpack-plugin": "^0.3.1",
