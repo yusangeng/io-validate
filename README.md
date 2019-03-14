@@ -2,10 +2,10 @@
 
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) [![Build Status](https://travis-ci.org/yusangeng/param-check.svg?branch=master)](https://travis-ci.org/yusangeng/param-check) [![Coverage Status](https://coveralls.io/repos/github/yusangeng/param-check/badge.svg?branch=master)](https://coveralls.io/github/yusangeng/param-check?branch=master) [![Npm Package Info](https://badge.fury.io/js/io-validate.svg)](https://www.npmjs.com/package/io-validate) [![Downloads](https://img.shields.io/npm/dw/io-validate.svg?style=flat)](https://www.npmjs.com/package/io-validate)
 
-Runtime data validators.
+Runtime data validator.
 
 ## Note
-* This package used to be named param-check.
+* This package used to be named `param-check`.
 
 ## Install
 
