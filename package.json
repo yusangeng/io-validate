@@ -3,7 +3,7 @@
   "version": "2.1.12",
   "description": "Runtime data validator.",
   "repository": {
-    "url": "https://github.com/yusangeng/param-check.git"
+    "url": "https://github.com/yusangeng/io-validate.git"
   },
   "main": "index.js",
   "types": "types/index.d.ts",
