@@ -8,7 +8,7 @@
   "main": "index.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "test": "nyc mocha test/*.spec.js",
+    "test": "nyc mocha --require babel-register test/*.spec.js",
     "coverage": "nyc report --reporter=lcov",
     "prepublishOnly": "npm run test",
     "ci": "npm run test && npm run coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
