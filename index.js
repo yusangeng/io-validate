@@ -29,4 +29,5 @@ Validator.register(require('./lib/validators/patterns'))
 Validator.register(require('./lib/validators/same'))
 Validator.register(require('./lib/validators/within'))
 
+validate.default = validate
 module.exports = validate
