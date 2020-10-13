@@ -1,2 +1,9 @@
 .vscode
 node_modules
+coverage
+.nyc_output
+test
+.babelrc
+.gitignore
+.npmrc
+.travis.yml
