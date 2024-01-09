@@ -17,6 +17,11 @@ describe('#among', _ => {
     done()
   })
 
+  it('good param: 4', done => {
+    testFn(4)
+    done()
+  })
+
   it('bad param: 6', done => {
     (function () {
       testFn(6)
