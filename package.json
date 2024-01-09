@@ -1,6 +1,6 @@
 {
   "name": "io-validate",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Runtime data validator.",
   "repository": {
     "url": "https://github.com/yusangeng/io-validate.git"
